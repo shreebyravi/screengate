@@ -1,0 +1,21 @@
+entity_id,name,entity_type,program_tag,strong_aliases,weak_aliases,id_number,id_issuing_country,dob_or_incorporation_date,nationality,address
+WL-001,Anton Vasilenko,Individual,CTF-LIST,A. Vasilenko,Anton Vasylenko,RA-ID-33021,Region A,1972-01-19,N/A,Region A
+WL-002,Blackridge Commodities Holdings,Entity,PROLIF-LIST,Blackridge Holdings,Blackridge Commodities,RC-REG-88031,Region C,2009-03-02,N/A,Region C
+WL-003,Grigor Petrov,Individual,SANCTIONS-LIST,G. Petrov,Grigori Petrov,RC-ID-11290,Region C,1965-08-30,N/A,Region C
+WL-004,Suresh Iyer,Individual,NARCO-LIST,S. Iyer,Suresh K. Iyer,IN-PAN-40219Y,India,1970-05-12,Indian,"7 Marine Drive, Chennai, India"
+WL-005,Rajiv Malhotra,Individual,NARCO-LIST,R. Malhotra,Raj Malhotra,IN-PAN-88213X,India,1968-03-14,Indian,"14 Nehru Road, Mumbai, India"
+WL-006,Crescent Metals Trading Co,Entity,FRAUD-LIST,Crescent Metals Trading,Crescent Metals Co,RB-REG-55210,Region B,2015-11-20,N/A,Region B
+WL-007,Yusuf Al Karim,Individual,SANCTIONS-LIST,Y. Al Karim,Yousef Al-Karim,AE-ID-220198,UAE,1980-09-05,Emirati,"Al Wasl Road, Dubai, UAE"
+WL-008,Priyanka Nagpal,Individual,FRAUD-LIST,P. Nagpal,Priya Nagpal,IN-PAN-77122Z,India,1985-02-27,Indian,"21 MG Road, Bengaluru, India"
+WL-009,Ironclad Freight Co,Entity,CTF-LIST,Ironclad Freight,Ironclad Freight Company,RC-REG-30044,Region C,2007-06-18,N/A,Region C
+WL-010,Miriam Solheim,Individual,SANCTIONS-LIST,M. Solheim,Miriam Solhiem,UK-PASS-990211,United Kingdom,1958-12-01,British,"Flat 4, Comerford House, London, UK"
+WL-011,Farida Al Mansouri,Individual,SANCTIONS-LIST,F. Al Mansouri,Farida Mansouri,AE-ID-559214,UAE,1975-07-22,Emirati,"Sheikh Zayed Road, Dubai, UAE"
+WL-012,United Shipping Lines,Entity,PROLIF-LIST,Shipping Lines Co,United Shipping Lines Ltd,RA-REG-66102,Region A,2003-04-09,N/A,Region A
+WL-013,Dmitri Osei,Individual,NARCO-LIST,D. Osei,Dimitri Osei,RC-ID-40218,Region C,1977-10-11,N/A,Region C
+WL-014,Wing Cheung Lau,Individual,CTF-LIST,W.C. Lau,Wing C. Lau,SG-NRIC-2201X,Singapore,1963-06-24,Singaporean,"18 Raffles Quay, Singapore"
+WL-015,Meridian Star Trading FZE,Entity,PROLIF-LIST,Meridian Star Trading,Meridian Trading FZE,AE-TL-77820,UAE,2011-05-09,N/A,"JAFZA, Dubai, UAE"
+WL-016,Nadia Farouk,Individual,SANCTIONS-LIST,N. Farouk,Nadia Farrouk,AE-ID-330871,UAE,1982-04-17,Emirati,"Al Khaleej Road, Sharjah, UAE"
+WL-017,Trans-Commodities Ltd,Entity,FRAUD-LIST,Trans-Commodities,Trans-Commodities Group,RB-REG-88420,Region B,2013-09-01,N/A,Region B
+WL-018,Viktor Halversen,Individual,CTF-LIST,V. Halversen,Viktor Halvorsen,RA-ID-77410,Region A,1969-02-08,N/A,Region A
+WL-019,Ahmed Baqir Sultani,Individual,NARCO-LIST,A.B. Sultani,Ahmed B. Sultani,AE-ID-901244,UAE,1974-12-30,Emirati,"Corniche Road, Abu Dhabi, UAE"
+WL-020,Okonkwo Bright Resources Ltd,Entity,PROLIF-LIST,Okonkwo Resources,Bright Resources Ltd,RC-REG-51290,Region C,2010-07-14,N/A,Region C

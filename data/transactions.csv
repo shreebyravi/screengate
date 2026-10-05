@@ -1,0 +1,16 @@
+transaction_id,corridor,counterparty_name,beneficiary_bank_name,amount_usd,counterparty_jurisdiction,beneficiary_bank_jurisdiction,trigger_new_counterparty,trigger_over_threshold,trigger_high_risk_jurisdiction,prior_transaction_history,notes
+T-1001,UAE-India,Anand Spice Exports Pvt Ltd,Coastal Trade Bank Ltd,15000,India,India,Y,Y,N,No prior transactions with this counterparty.,
+T-1002,UAE-India,Rajiv Malhotra,Silverline Bank Ltd,22000,India,India,Y,Y,N,No prior transactions with this counterparty.,
+T-1003,UAE-UK,Farida Al Mansouri,Union Gulf Bank,8000,UAE,UAE,Y,N,N,No prior transactions with this counterparty.,
+T-1004,UAE-UK,Meridian Star Trading FZE,Trustline Commercial Bank,45000,UAE,United Kingdom,Y,Y,N,No prior transactions with this counterparty.,
+T-1005,UAE-India,Novak Bridge Commodities LLP,Union Settlement Bank,120000,India,Region C,Y,Y,Y,No prior transactions with this counterparty.,
+T-1006,UAE-India,Devika Rathore Textiles Pvt Ltd,Coastal Trade Bank Ltd,18000,India,India,Y,Y,N,No prior transactions with this counterparty.,Director Devika Rathore previously held a senior state government position (2014-2018).
+T-1007,UAE-UK,Chalmers & Wexford Logistics Ltd,Union Gulf Bank,11000,United Kingdom,UAE,N,Y,N,6 prior clean transactions with this counterparty over the past year.,
+T-1008,UAE-India,Crescent Minerals Co,Silverline Bank Ltd,30000,Region B,India,Y,Y,Y,No prior transactions with this counterparty.,
+T-1009,UAE-UK,Grantley Family Office Ltd,Northgate Merchant Bank,27000,United Kingdom,Region A,Y,Y,Y,No prior transactions with this counterparty.,
+T-1010,UAE-India,Priya Nagarajan,Coastal Trade Bank Ltd,12000,India,India,Y,Y,N,No prior transactions with this counterparty.,
+T-1011,UAE-UK,Whitmore & Sons Precision Ltd,Union Settlement Bank,9000,United Kingdom,Region C,N,N,Y,12 prior clean transactions over 2 years.,
+T-1012,UAE-India,Deshmukh Agro Traders Pvt Ltd,Silverline Bank Ltd,16000,India,India,Y,Y,N,No prior transactions with this counterparty.,
+T-1013,UAE-UK,Okafor-Lindqvist Marine Supplies Ltd,Union Gulf Bank,50000,United Kingdom,UAE,N,Y,N,2 prior clean transactions.,
+T-1014,UAE-India,Suresh Iyer Global Traders,Trustline Commercial Bank,21000,India,United Kingdom,Y,Y,N,No prior transactions with this counterparty.,
+T-1015,UAE-UK,Fenwick Global Shipping Ltd,Trustline Commercial Bank,13000,United Kingdom,United Kingdom,N,Y,N,4 prior clean transactions.,
