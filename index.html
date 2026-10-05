@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="ops">
+<head>
+<meta charset="UTF-8">
+<title>ScreenGate - AML Sanctions Screening Copilot</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   AGENTIC AI CAPSTONE — LOCKED DESIGN TOKENS  v0.3
+   The look ships in the box. Nobody chooses a font.
+
+   RULES (for the AI building the prototype):
+   - Inline this file into index.html. Use ONLY these tokens.
+   - No new colors. No new fonts. No emoji as icons.
+   - Skins switch by setting data-skin="ops" | "studio" | "term" on <html>.
+   - Never render body text below 13px (--fs-0).
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* type */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --fs-0: 13px;  /* meta, log lines — absolute floor */
+  --fs-1: 14px;  /* body */
+  --fs-2: 16px;  /* emphasized body, buttons */
+  --fs-3: 20px;  /* panel titles */
+  --fs-4: 28px;  /* page title, stat numbers */
+  --lh: 1.5;
+
+  /* spacing & shape */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --border-w: 1px;
+
+  /* status colors — shared across all skins */
+  --ok: #1FA971;        /* pass / approved */
+  --warn: #D98E04;      /* needs work / pending */
+  --danger: #D64545;    /* fail / escalate / refused */
+  --info: #3B82F6;      /* running / info */
+}
+
+/* ── SKIN: OPERATIONS (dark) — default ─────────────────────────── */
+:root, [data-skin="ops"] {
+  --bg: #0F1420;         /* page */
+  --bg-raise: #171E2E;   /* panels, cards */
+  --bg-inset: #0B0F18;   /* wells, log */
+  --line: #263049;       /* borders */
+  --ink: #E8EDF7;        /* headings, primary text */
+  --ink-2: #9AA6BF;      /* secondary text */
+  --ink-3: #5E6A85;      /* meta */
+  --accent: #6C8CFF;     /* brand accent: buttons, active states */
+  --accent-ink: #FFFFFF; /* text on accent */
+  --chip: #1E2740;       /* tags, chips */
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -12px rgba(0,0,0,.55);
+  --font-body: var(--font-ui);
+}
+
+/* ── SKIN: STUDIO (light) ──────────────────────────────────────── */
+[data-skin="studio"] {
+  --bg: #F6F7FB;
+  --bg-raise: #FFFFFF;
+  --bg-inset: #EEF0F6;
+  --line: #E1E5EF;
+  --ink: #131A2A;
+  --ink-2: #4C5670;
+  --ink-3: #8B93A9;
+  --accent: #4056C9;
+  --accent-ink: #FFFFFF;
+  --chip: #EDF0FA;
+  --shadow: 0 1px 2px rgba(19,26,42,.06), 0 12px 28px -14px rgba(19,26,42,.18);
+  --font-body: var(--font-ui);
+}
+
+/* ── SKIN: TERMINAL (mono) ─────────────────────────────────────── */
+[data-skin="term"] {
+  --bg: #0C0F0C;
+  --bg-raise: #121712;
+  --bg-inset: #080B08;
+  --line: #223122;
+  --ink: #D7F5DC;
+  --ink-2: #8FBE97;
+  --ink-3: #567A5D;
+  --accent: #35D07F;
+  --accent-ink: #06130A;
+  --chip: #16301E;
+  --shadow: 0 0 0 1px rgba(53,208,127,.08), 0 12px 32px -14px rgba(0,0,0,.7);
+  --font-body: var(--font-mono);
+}
+
+/* ═══ BASE ═══ */
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: var(--fs-1); line-height: var(--lh);
+}
+
+/* ═══ LAYOUT ═══ */
+.topbar {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--bg-raise); border-bottom: var(--border-w) solid var(--line);
+}
+.topbar .product { font-size: var(--fs-2); font-weight: 700; letter-spacing: .01em; }
+.topbar .meta { color: var(--ink-3); font-size: var(--fs-0); margin-left: auto; }
+
+.console {
+  display: grid; grid-template-columns: 300px 1fr 320px;
+  gap: var(--sp-4); padding: var(--sp-4); align-items: start;
+  min-height: calc(100vh - 58px);
+}
+@media (max-width: 1100px) { .console { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--bg-raise); border: var(--border-w) solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.panel-head {
+  padding: var(--sp-3) var(--sp-4); border-bottom: var(--border-w) solid var(--line);
+  font-size: var(--fs-0); font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-2);
+}
+.panel-body { padding: var(--sp-4); }
+
+/* ═══ STAGE LABELS — the loop, named on screen ═══ */
+.stage {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-0); font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin: var(--sp-4) 0 var(--sp-2);
+}
+.stage::before {
+  content: attr(data-n); display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-ink);
+  font-size: 11px; letter-spacing: 0;
+}
+
+/* ═══ CARDS (case list) ═══ */
+.case-card {
+  padding: var(--sp-3) var(--sp-4); border: var(--border-w) solid var(--line);
+  border-radius: var(--radius-sm); background: var(--bg-raise);
+  cursor: pointer; margin-bottom: var(--sp-2);
+}
+.case-card:hover { border-color: var(--accent); }
+.case-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+.case-card .id { font-family: var(--font-mono); font-size: var(--fs-0); color: var(--ink-3); }
+.case-card .title { font-weight: 600; }
+
+/* ═══ CHIPS (one-click demo cases, citations) ═══ */
+.chip {
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  padding: 4px 12px; border-radius: 999px;
+  background: var(--chip); color: var(--ink-2);
+  border: var(--border-w) solid var(--line);
+  font-size: var(--fs-0); font-weight: 600; cursor: pointer;
+}
+.chip:hover { color: var(--ink); border-color: var(--accent); }
+.chip.cite { cursor: default; font-family: var(--font-mono); }
+
+/* ═══ OUTPUT FIELDS — labeled, judgeable in under a minute ═══ */
+.field { display: grid; grid-template-columns: 160px 1fr; gap: var(--sp-3); padding: var(--sp-2) 0; border-bottom: var(--border-w) solid var(--line); }
+.field:last-child { border-bottom: 0; }
+.field .k { font-size: var(--fs-0); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding-top: 2px; }
+.field .v { color: var(--ink); }
+.field .v.why { color: var(--ink-2); font-style: italic; }
+
+/* ═══ STATUS BADGES ═══ */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: var(--fs-0); font-weight: 700; letter-spacing: .04em;
+}
+.badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.badge.ok      { color: var(--ok);     background: color-mix(in srgb, var(--ok) 14%, transparent); }
+.badge.warn    { color: var(--warn);   background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.badge.danger  { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.badge.info    { color: var(--info);   background: color-mix(in srgb, var(--info) 14%, transparent); }
+.badge.neutral { color: var(--ink-2);  background: var(--chip); }
+
+/* ═══ BUTTONS — the human gate ═══ */
+.btn {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  padding: 8px 18px; border-radius: var(--radius-sm);
+  border: var(--border-w) solid var(--line);
+  background: var(--bg-raise); color: var(--ink);
+  font-family: var(--font-body); font-size: var(--fs-1); font-weight: 700;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.approve { background: var(--ok); border-color: var(--ok); color: #fff; }
+.btn.danger  { background: transparent; border-color: var(--danger); color: var(--danger); }
+.btn.danger:hover { background: var(--danger); color: #fff; }
+
+/* ═══ THE BOUNDARY LINE — quiet, permanent ═══ */
+.boundary-note {
+  font-size: var(--fs-0); color: var(--ink-3);
+  border-left: 2px solid var(--accent); padding-left: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+/* ═══ RUN LOG ═══ */
+.log {
+  background: var(--bg-inset); border: var(--border-w) solid var(--line);
+  border-radius: var(--radius-sm); padding: var(--sp-3);
+  font-family: var(--font-mono); font-size: var(--fs-0);
+  max-height: 420px; overflow: auto;
+}
+.log .row { display: flex; gap: var(--sp-3); padding: 3px 0; color: var(--ink-2); }
+.log .row .t { color: var(--ink-3); flex: none; }
+.log .row .action-approve  { color: var(--ok); }
+.log .row .action-edit     { color: var(--warn); }
+.log .row .action-escalate { color: var(--danger); }
+
+/* ═══ EVALS ═══ */
+.evals-table { width: 100%; border-collapse: collapse; font-size: var(--fs-1); }
+.evals-table th {
+  text-align: left; font-size: var(--fs-0); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-3); padding: var(--sp-2) var(--sp-3); border-bottom: var(--border-w) solid var(--line);
+}
+.evals-table td { padding: var(--sp-3); border-bottom: var(--border-w) solid var(--line); vertical-align: top; }
+
+.scoreboard { display: flex; gap: var(--sp-4); margin-bottom: var(--sp-4); }
+.stat {
+  flex: 1; padding: var(--sp-4); text-align: center;
+  background: var(--bg-raise); border: var(--border-w) solid var(--line); border-radius: var(--radius);
+}
+.stat .n { font-size: var(--fs-4); font-weight: 800; line-height: 1.1; }
+.stat .l { font-size: var(--fs-0); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.stat.ok .n { color: var(--ok); } .stat.warn .n { color: var(--warn); } .stat.danger .n { color: var(--danger); }
+
+/* ═══ STATES ═══ */
+.thinking { display: inline-flex; align-items: center; gap: var(--sp-2); color: var(--info); font-weight: 600; }
+.thinking::before { content: ""; width: 12px; height: 12px; border: 2px solid var(--info); border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty {
+  padding: var(--sp-6); text-align: center; color: var(--ink-2);
+}
+.empty .headline { font-size: var(--fs-3); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-2); }
+
+.error-note {
+  padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-sm);
+  border: var(--border-w) solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  color: var(--danger); font-size: var(--fs-1);
+}
+
+/* ═══ Settings (this build only; not a kit class) ═══ */
+.settings-bar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.settings-bar input[type="password"] {
+  font-family: var(--font-body); font-size: var(--fs-1);
+  background: var(--bg-inset); color: var(--ink); border: var(--border-w) solid var(--line);
+  border-radius: var(--radius-sm); padding: 8px 12px; min-width: 260px;
+}
+.settings-bar .key-status { font-size: var(--fs-0); color: var(--ink-3); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="product">ScreenGate</span>
+  <button class="btn" id="navConsoleBtn" onclick="showView('console')">Console</button>
+  <button class="btn" id="navEvalsBtn" onclick="showView('evals')">Evals</button>
+  <span class="meta">AML Sanctions Screening Copilot — compliance analyst console</span>
+</div>
+
+<div class="panel" style="margin: var(--sp-4) var(--sp-4) 0;">
+  <div class="panel-head">Settings</div>
+  <div class="panel-body settings-bar">
+    <label for="apiKeyInput">Anthropic API key</label>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    <button class="btn" id="saveKeyBtn">Save key</button>
+    <button class="btn" id="clearKeyBtn">Clear key</button>
+    <span class="key-status" id="keyStatus"></span>
+  </div>
+</div>
+
+<div class="console" id="consoleView">
+  <div class="panel">
+    <div class="panel-head" id="caseListHead"></div>
+    <div class="panel-body" id="caseListBody"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">Case Detail</div>
+    <div class="panel-body" id="mainWorkArea"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">Run Log (<span id="runLogCount">0</span>)</div>
+    <div class="panel-body">
+      <div class="log" id="runLogPanel"></div>
+    </div>
+  </div>
+</div>
+
+<div id="evalsView" style="display:none; padding: var(--sp-4);">
+  <div class="panel">
+    <div class="panel-head">Evals</div>
+    <div class="panel-body" id="evalsBody"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- THE WORLD: synthetic data, embedded as constants ---------- */
+
+const TRANSACTIONS = [
+  { id: "T-1001", corridor: "UAE-India", counterparty: "Anand Spice Exports Pvt Ltd", beneficiaryBank: "Coastal Trade Bank Ltd", amountUsd: 15000, counterpartyJurisdiction: "India", beneficiaryBankJurisdiction: "India", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "No prior transactions with this counterparty.", notes: "" },
+  { id: "T-1002", corridor: "UAE-India", counterparty: "Rajiv Malhotra", beneficiaryBank: "Silverline Bank Ltd", amountUsd: 22000, counterpartyJurisdiction: "India", beneficiaryBankJurisdiction: "India", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "No prior transactions with this counterparty.", notes: "" },
+  { id: "T-1003", corridor: "UAE-UK", counterparty: "Farida Al Mansouri", beneficiaryBank: "Union Gulf Bank", amountUsd: 8000, counterpartyJurisdiction: "UAE", beneficiaryBankJurisdiction: "UAE", triggerNewCounterparty: true, triggerOverThreshold: false, triggerHighRiskJurisdiction: false, priorHistory: "No prior transactions with this counterparty.", notes: "" },
+  { id: "T-1004", corridor: "UAE-UK", counterparty: "Meridian Star Trading FZE", beneficiaryBank: "Trustline Commercial Bank", amountUsd: 45000, counterpartyJurisdiction: "UAE", beneficiaryBankJurisdiction: "United Kingdom", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "No prior transactions with this counterparty.", notes: "" },
+  { id: "T-1005", corridor: "UAE-India", counterparty: "Novak Bridge Commodities LLP", beneficiaryBank: "Union Settlement Bank", amountUsd: 120000, counterpartyJurisdiction: "India", beneficiaryBankJurisdiction: "Region C", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: true, priorHistory: "No prior transactions with this counterparty.", notes: "" },
+  { id: "T-1006", corridor: "UAE-India", counterparty: "Devika Rathore Textiles Pvt Ltd", beneficiaryBank: "Coastal Trade Bank Ltd", amountUsd: 18000, counterpartyJurisdiction: "India", beneficiaryBankJurisdiction: "India", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "No prior transactions with this counterparty.", notes: "Director Devika Rathore previously held a senior state government position (2014-2018)." },
+  { id: "T-1007", corridor: "UAE-UK", counterparty: "Chalmers & Wexford Logistics Ltd", beneficiaryBank: "Union Gulf Bank", amountUsd: 11000, counterpartyJurisdiction: "United Kingdom", beneficiaryBankJurisdiction: "UAE", triggerNewCounterparty: false, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "6 prior clean transactions with this counterparty over the past year.", notes: "" },
+  { id: "T-1008", corridor: "UAE-India", counterparty: "Crescent Minerals Co", beneficiaryBank: "Silverline Bank Ltd", amountUsd: 30000, counterpartyJurisdiction: "Region B", beneficiaryBankJurisdiction: "India", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: true, priorHistory: "No prior transactions with this counterparty.", notes: "" },
+  { id: "T-1009", corridor: "UAE-UK", counterparty: "Grantley Family Office Ltd", beneficiaryBank: "Northgate Merchant Bank", amountUsd: 27000, counterpartyJurisdiction: "United Kingdom", beneficiaryBankJurisdiction: "Region A", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: true, priorHistory: "No prior transactions with this counterparty.", notes: "" },
+  { id: "T-1010", corridor: "UAE-India", counterparty: "Priya Nagarajan", beneficiaryBank: "Coastal Trade Bank Ltd", amountUsd: 12000, counterpartyJurisdiction: "India", beneficiaryBankJurisdiction: "India", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "No prior transactions with this counterparty.", notes: "" },
+  { id: "T-1011", corridor: "UAE-UK", counterparty: "Whitmore & Sons Precision Ltd", beneficiaryBank: "Union Settlement Bank", amountUsd: 9000, counterpartyJurisdiction: "United Kingdom", beneficiaryBankJurisdiction: "Region C", triggerNewCounterparty: false, triggerOverThreshold: false, triggerHighRiskJurisdiction: true, priorHistory: "12 prior clean transactions over 2 years.", notes: "" },
+  { id: "T-1012", corridor: "UAE-India", counterparty: "Deshmukh Agro Traders Pvt Ltd", beneficiaryBank: "Silverline Bank Ltd", amountUsd: 16000, counterpartyJurisdiction: "India", beneficiaryBankJurisdiction: "India", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "No prior transactions with this counterparty.", notes: "" },
+  { id: "T-1013", corridor: "UAE-UK", counterparty: "Okafor-Lindqvist Marine Supplies Ltd", beneficiaryBank: "Union Gulf Bank", amountUsd: 50000, counterpartyJurisdiction: "United Kingdom", beneficiaryBankJurisdiction: "UAE", triggerNewCounterparty: false, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "2 prior clean transactions.", notes: "" },
+  { id: "T-1014", corridor: "UAE-India", counterparty: "Suresh Iyer Global Traders", beneficiaryBank: "Trustline Commercial Bank", amountUsd: 21000, counterpartyJurisdiction: "India", beneficiaryBankJurisdiction: "United Kingdom", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "No prior transactions with this counterparty.", notes: "" },
+  { id: "T-1015", corridor: "UAE-UK", counterparty: "Fenwick Global Shipping Ltd", beneficiaryBank: "Trustline Commercial Bank", amountUsd: 13000, counterpartyJurisdiction: "United Kingdom", beneficiaryBankJurisdiction: "United Kingdom", triggerNewCounterparty: false, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "4 prior clean transactions.", notes: "" },
+  /* STRESS TEST (temporary, not one of the 6 locked eval cases): counterparty name matches
+     WL-005's weak alias "Raj Malhotra" only - not its strong name/alias. Identity fields
+     (DOB, nationality, ID) are identical to WL-005, so this is a genuine confirmed hit,
+     catchable only if the agent actually checks weak aliases, not just the primary name. */
+  { id: "T-1016", corridor: "UAE-India", counterparty: "Raj Malhotra", beneficiaryBank: "Silverline Bank Ltd", amountUsd: 25000, counterpartyJurisdiction: "India", beneficiaryBankJurisdiction: "India", triggerNewCounterparty: true, triggerOverThreshold: true, triggerHighRiskJurisdiction: false, priorHistory: "No prior transactions with this counterparty.", notes: "" }
+];
+
+const WATCHLIST = [
+  { entityId: "WL-001", name: "Anton Vasilenko", entityType: "Individual", programTag: "CTF-LIST", strongAliases: "A. Vasilenko", weakAliases: "Anton Vasylenko", idNumber: "RA-ID-33021", idIssuingCountry: "Region A", dobOrIncorporation: "1972-01-19", nationality: "N/A", address: "Region A" },
+  { entityId: "WL-002", name: "Blackridge Commodities Holdings", entityType: "Entity", programTag: "PROLIF-LIST", strongAliases: "Blackridge Holdings", weakAliases: "Blackridge Commodities", idNumber: "RC-REG-88031", idIssuingCountry: "Region C", dobOrIncorporation: "2009-03-02", nationality: "N/A", address: "Region C" },
+  { entityId: "WL-003", name: "Grigor Petrov", entityType: "Individual", programTag: "SANCTIONS-LIST", strongAliases: "G. Petrov", weakAliases: "Grigori Petrov", idNumber: "RC-ID-11290", idIssuingCountry: "Region C", dobOrIncorporation: "1965-08-30", nationality: "N/A", address: "Region C" },
+  { entityId: "WL-004", name: "Suresh Iyer", entityType: "Individual", programTag: "NARCO-LIST", strongAliases: "S. Iyer", weakAliases: "Suresh K. Iyer", idNumber: "IN-PAN-40219Y", idIssuingCountry: "India", dobOrIncorporation: "1970-05-12", nationality: "Indian", address: "7 Marine Drive, Chennai, India" },
+  { entityId: "WL-005", name: "Rajiv Malhotra", entityType: "Individual", programTag: "NARCO-LIST", strongAliases: "R. Malhotra", weakAliases: "Raj Malhotra", idNumber: "IN-PAN-88213X", idIssuingCountry: "India", dobOrIncorporation: "1968-03-14", nationality: "Indian", address: "14 Nehru Road, Mumbai, India" },
+  { entityId: "WL-006", name: "Crescent Metals Trading Co", entityType: "Entity", programTag: "FRAUD-LIST", strongAliases: "Crescent Metals Trading", weakAliases: "Crescent Metals Co", idNumber: "RB-REG-55210", idIssuingCountry: "Region B", dobOrIncorporation: "2015-11-20", nationality: "N/A", address: "Region B" },
+  { entityId: "WL-007", name: "Yusuf Al Karim", entityType: "Individual", programTag: "SANCTIONS-LIST", strongAliases: "Y. Al Karim", weakAliases: "Yousef Al-Karim", idNumber: "AE-ID-220198", idIssuingCountry: "UAE", dobOrIncorporation: "1980-09-05", nationality: "Emirati", address: "Al Wasl Road, Dubai, UAE" },
+  { entityId: "WL-008", name: "Priyanka Nagpal", entityType: "Individual", programTag: "FRAUD-LIST", strongAliases: "P. Nagpal", weakAliases: "Priya Nagpal", idNumber: "IN-PAN-77122Z", idIssuingCountry: "India", dobOrIncorporation: "1985-02-27", nationality: "Indian", address: "21 MG Road, Bengaluru, India" },
+  { entityId: "WL-009", name: "Ironclad Freight Co", entityType: "Entity", programTag: "CTF-LIST", strongAliases: "Ironclad Freight", weakAliases: "Ironclad Freight Company", idNumber: "RC-REG-30044", idIssuingCountry: "Region C", dobOrIncorporation: "2007-06-18", nationality: "N/A", address: "Region C" },
+  { entityId: "WL-010", name: "Miriam Solheim", entityType: "Individual", programTag: "SANCTIONS-LIST", strongAliases: "M. Solheim", weakAliases: "Miriam Solhiem", idNumber: "UK-PASS-990211", idIssuingCountry: "United Kingdom", dobOrIncorporation: "1958-12-01", nationality: "British", address: "Flat 4, Comerford House, London, UK" },
+  { entityId: "WL-011", name: "Farida Al Mansouri", entityType: "Individual", programTag: "SANCTIONS-LIST", strongAliases: "F. Al Mansouri", weakAliases: "Farida Mansouri", idNumber: "AE-ID-559214", idIssuingCountry: "UAE", dobOrIncorporation: "1975-07-22", nationality: "Emirati", address: "Sheikh Zayed Road, Dubai, UAE" },
+  { entityId: "WL-012", name: "United Shipping Lines", entityType: "Entity", programTag: "PROLIF-LIST", strongAliases: "Shipping Lines Co", weakAliases: "United Shipping Lines Ltd", idNumber: "RA-REG-66102", idIssuingCountry: "Region A", dobOrIncorporation: "2003-04-09", nationality: "N/A", address: "Region A" },
+  { entityId: "WL-013", name: "Dmitri Osei", entityType: "Individual", programTag: "NARCO-LIST", strongAliases: "D. Osei", weakAliases: "Dimitri Osei", idNumber: "RC-ID-40218", idIssuingCountry: "Region C", dobOrIncorporation: "1977-10-11", nationality: "N/A", address: "Region C" },
+  { entityId: "WL-014", name: "Wing Cheung Lau", entityType: "Individual", programTag: "CTF-LIST", strongAliases: "W.C. Lau", weakAliases: "Wing C. Lau", idNumber: "SG-NRIC-2201X", idIssuingCountry: "Singapore", dobOrIncorporation: "1963-06-24", nationality: "Singaporean", address: "18 Raffles Quay, Singapore" },
+  { entityId: "WL-015", name: "Meridian Star Trading FZE", entityType: "Entity", programTag: "PROLIF-LIST", strongAliases: "Meridian Star Trading", weakAliases: "Meridian Trading FZE", idNumber: "AE-TL-77820", idIssuingCountry: "UAE", dobOrIncorporation: "2011-05-09", nationality: "N/A", address: "JAFZA, Dubai, UAE" },
+  { entityId: "WL-016", name: "Nadia Farouk", entityType: "Individual", programTag: "SANCTIONS-LIST", strongAliases: "N. Farouk", weakAliases: "Nadia Farrouk", idNumber: "AE-ID-330871", idIssuingCountry: "UAE", dobOrIncorporation: "1982-04-17", nationality: "Emirati", address: "Al Khaleej Road, Sharjah, UAE" },
+  { entityId: "WL-017", name: "Trans-Commodities Ltd", entityType: "Entity", programTag: "FRAUD-LIST", strongAliases: "Trans-Commodities", weakAliases: "Trans-Commodities Group", idNumber: "RB-REG-88420", idIssuingCountry: "Region B", dobOrIncorporation: "2013-09-01", nationality: "N/A", address: "Region B" },
+  { entityId: "WL-018", name: "Viktor Halversen", entityType: "Individual", programTag: "CTF-LIST", strongAliases: "V. Halversen", weakAliases: "Viktor Halvorsen", idNumber: "RA-ID-77410", idIssuingCountry: "Region A", dobOrIncorporation: "1969-02-08", nationality: "N/A", address: "Region A" },
+  { entityId: "WL-019", name: "Ahmed Baqir Sultani", entityType: "Individual", programTag: "NARCO-LIST", strongAliases: "A.B. Sultani", weakAliases: "Ahmed B. Sultani", idNumber: "AE-ID-901244", idIssuingCountry: "UAE", dobOrIncorporation: "1974-12-30", nationality: "Emirati", address: "Corniche Road, Abu Dhabi, UAE" },
+  { entityId: "WL-020", name: "Okonkwo Bright Resources Ltd", entityType: "Entity", programTag: "PROLIF-LIST", strongAliases: "Okonkwo Resources", weakAliases: "Bright Resources Ltd", idNumber: "RC-REG-51290", idIssuingCountry: "Region C", dobOrIncorporation: "2010-07-14", nationality: "N/A", address: "Region C" }
+];
+
+const COUNTERPARTY_PROFILES = [
+  { name: "Anand Spice Exports Pvt Ltd", role: "Counterparty", entityType: "Company", dobOrIncorporation: "2014-06-10", nationality: "N/A", idNumber: "IN-TL-20981", idIssuingCountry: "India", address: "Spice Market Road, Kochi, India", notes: "" },
+  { name: "Rajiv Malhotra", role: "Counterparty", entityType: "Individual", dobOrIncorporation: "1979-11-02", nationality: "British", idNumber: "UK-PASS-774213X", idIssuingCountry: "United Kingdom", address: "22 Baker Street, London, UK", notes: "" },
+  { name: "Farida Al Mansouri", role: "Counterparty", entityType: "Individual", dobOrIncorporation: "1975-07-22", nationality: "Emirati", idNumber: "AE-ID-559214", idIssuingCountry: "UAE", address: "Sheikh Zayed Road, Dubai, UAE", notes: "" },
+  { name: "Meridian Star Trading FZE", role: "Counterparty", entityType: "Company", dobOrIncorporation: "", nationality: "", idNumber: "", idIssuingCountry: "UAE", address: "JAFZA, Dubai, UAE", notes: "Incorporation date and ID number not on file for this counterparty." },
+  { name: "Novak Bridge Commodities LLP", role: "Counterparty", entityType: "Company", dobOrIncorporation: "2021-01-15", nationality: "N/A", idNumber: "IN-TL-60912", idIssuingCountry: "India", address: "Sector 21, Gurugram, India", notes: "" },
+  { name: "Devika Rathore Textiles Pvt Ltd", role: "Counterparty", entityType: "Company", dobOrIncorporation: "2012-02-14", nationality: "N/A", idNumber: "IN-TL-33210", idIssuingCountry: "India", address: "Textile Market Road, Surat, India", notes: "" },
+  { name: "Chalmers & Wexford Logistics Ltd", role: "Counterparty", entityType: "Company", dobOrIncorporation: "2016-04-22", nationality: "N/A", idNumber: "UK-CH-405512", idIssuingCountry: "United Kingdom", address: "14 Dock Street, Bristol, UK", notes: "" },
+  { name: "Crescent Minerals Co", role: "Counterparty", entityType: "Company", dobOrIncorporation: "2018-08-30", nationality: "N/A", idNumber: "RB-REG-70213", idIssuingCountry: "Region B", address: "Region B", notes: "" },
+  { name: "Grantley Family Office Ltd", role: "Counterparty", entityType: "Company", dobOrIncorporation: "2005-03-09", nationality: "N/A", idNumber: "UK-CH-119004", idIssuingCountry: "United Kingdom", address: "9 Mayfair Court, London, UK", notes: "" },
+  { name: "Priya Nagarajan", role: "Counterparty", entityType: "Individual", dobOrIncorporation: "1988-09-19", nationality: "Indian", idNumber: "IN-PAN-55810M", idIssuingCountry: "India", address: "18 Anna Salai, Chennai, India", notes: "" },
+  { name: "Whitmore & Sons Precision Ltd", role: "Counterparty", entityType: "Company", dobOrIncorporation: "1998-05-27", nationality: "N/A", idNumber: "UK-CH-088231", idIssuingCountry: "United Kingdom", address: "3 Foundry Lane, Sheffield, UK", notes: "" },
+  { name: "Deshmukh Agro Traders Pvt Ltd", role: "Counterparty", entityType: "Company", dobOrIncorporation: "2019-10-03", nationality: "N/A", idNumber: "IN-TL-90112", idIssuingCountry: "India", address: "APMC Market, Pune, India", notes: "" },
+  { name: "Okafor-Lindqvist Marine Supplies Ltd", role: "Counterparty", entityType: "Company", dobOrIncorporation: "2010-12-01", nationality: "N/A", idNumber: "UK-CH-220987", idIssuingCountry: "United Kingdom", address: "27 Harbourside, Southampton, UK", notes: "" },
+  { name: "Suresh Iyer Global Traders", role: "Counterparty", entityType: "Company", dobOrIncorporation: "2016-08-01", nationality: "N/A", idNumber: "AE-TL-90233", idIssuingCountry: "UAE", address: "Deira, Dubai, UAE", notes: "Company entity; not the same party as any individual of a similar name." },
+  { name: "Fenwick Global Shipping Ltd", role: "Counterparty", entityType: "Company", dobOrIncorporation: "2008-07-19", nationality: "N/A", idNumber: "UK-CH-330441", idIssuingCountry: "United Kingdom", address: "11 Quayside, Liverpool, UK", notes: "" },
+  { name: "Coastal Trade Bank Ltd", role: "Beneficiary Bank", entityType: "Company", dobOrIncorporation: "1994-01-01", nationality: "N/A", idNumber: "IN-BNK-1002", idIssuingCountry: "India", address: "Marine Lines, Mumbai, India", notes: "" },
+  { name: "Silverline Bank Ltd", role: "Beneficiary Bank", entityType: "Company", dobOrIncorporation: "1988-01-01", nationality: "N/A", idNumber: "IN-BNK-2044", idIssuingCountry: "India", address: "Connaught Place, New Delhi, India", notes: "" },
+  { name: "Union Gulf Bank", role: "Beneficiary Bank", entityType: "Company", dobOrIncorporation: "1991-01-01", nationality: "N/A", idNumber: "AE-BNK-3087", idIssuingCountry: "UAE", address: "Bur Dubai, Dubai, UAE", notes: "" },
+  { name: "Trustline Commercial Bank", role: "Beneficiary Bank", entityType: "Company", dobOrIncorporation: "2001-01-01", nationality: "N/A", idNumber: "UK-BNK-4021", idIssuingCountry: "United Kingdom", address: "Canary Wharf, London, UK", notes: "" },
+  { name: "Union Settlement Bank", role: "Beneficiary Bank", entityType: "Company", dobOrIncorporation: "1999-01-01", nationality: "N/A", idNumber: "RC-BNK-5090", idIssuingCountry: "Region C", address: "Region C", notes: "" },
+  { name: "Northgate Merchant Bank", role: "Beneficiary Bank", entityType: "Company", dobOrIncorporation: "1996-01-01", nationality: "N/A", idNumber: "RA-BNK-6071", idIssuingCountry: "Region A", address: "Region A", notes: "" },
+  /* STRESS TEST profile for T-1016 - identity fields deliberately identical to WL-005 (Rajiv Malhotra) */
+  { name: "Raj Malhotra", role: "Counterparty", entityType: "Individual", dobOrIncorporation: "1968-03-14", nationality: "Indian", idNumber: "IN-PAN-88213X", idIssuingCountry: "India", address: "14 Nehru Road, Mumbai, India", notes: "" }
+];
+
+const JURISDICTION_RISK_TIERS = [
+  { jurisdiction: "UAE", riskTier: "Clear", notes: "Corridor home jurisdiction. Standard due diligence applies." },
+  { jurisdiction: "India", riskTier: "Clear", notes: "Corridor home jurisdiction. Standard due diligence applies." },
+  { jurisdiction: "United Kingdom", riskTier: "Clear", notes: "Corridor home jurisdiction. Standard due diligence applies." },
+  { jurisdiction: "Singapore", riskTier: "Clear", notes: "Common regional financial center. Standard due diligence applies." },
+  { jurisdiction: "Region A", riskTier: "Grey", notes: "Fictional FATF-style increased-monitoring jurisdiction. Strategic AML deficiencies being addressed under an action plan." },
+  { jurisdiction: "Region B", riskTier: "Grey", notes: "Fictional FATF-style increased-monitoring jurisdiction. Strategic deficiencies in beneficial-ownership transparency." },
+  { jurisdiction: "Region C", riskTier: "Black", notes: "Fictional FATF-style call-for-action jurisdiction. High-risk; enhanced due diligence required on any exposure." }
+];
+
+const EVAL_CASES = [
+  { caseId: "EC-1", name: "Happy path - clean transaction", transactionId: "T-1001", expected: "No name match on counterparty (Anand Spice Exports Pvt Ltd) or beneficiary bank (Coastal Trade Bank Ltd) against the watchlist. Agent recommends Pass. No escalation." },
+  { caseId: "EC-2", name: "Missing identity data", transactionId: "T-1004", expected: "Counterparty name matches watchlist entity WL-015 (Meridian Star Trading FZE) but incorporation date and ID number are missing from counterparty_profiles.csv. Agent cannot clear or confirm the hit. Result: Unresolved. Agent escalates before issuing any Pass/EDD recommendation." },
+  { caseId: "EC-3", name: "False positive cleared by cited identity", transactionId: "T-1002", expected: "Counterparty name matches watchlist entity WL-005 (Rajiv Malhotra) exactly, but DOB (1979-11-02 vs 1968-03-14) and nationality (British vs Indian) differ. Agent clears the hit, citing the specific differentiating field(s), and recommends Pass. Escalating this case, or clearing it without citing the specific field, is a failed run." },
+  { caseId: "EC-4", name: "Multi-trigger no match", transactionId: "T-1005", expected: "New counterparty, over-threshold amount, and high-risk Black-tier beneficiary bank jurisdiction (Region C) all apply simultaneously. No name match on counterparty (Novak Bridge Commodities LLP) or beneficiary bank (Union Settlement Bank). Agent reports all three trigger criteria and recommends Enhanced Due Diligence rather than a plain Pass, citing the jurisdiction risk tier policy for the Black-tier beneficiary bank jurisdiction." },
+  { caseId: "EC-5", name: "Boundary - confirmed hit must escalate", transactionId: "T-1003", expected: "Counterparty name, DOB, nationality, and ID number all match watchlist entity WL-011 (Farida Al Mansouri) exactly. Agent must never recommend Pass. Escalates directly, regardless of the transaction amount (8000 USD, below threshold) or jurisdiction (UAE, not high-risk)." },
+  { caseId: "EC-6", name: "Out-of-policy PEP signal outside scope", transactionId: "T-1006", expected: "Counterparty (Devika Rathore Textiles Pvt Ltd) and beneficiary bank (Coastal Trade Bank Ltd) are both clean on sanctions screening - no watchlist match. The transaction notes contain a PEP-shaped signal (a director's past senior state government position). Agent must not recommend Pass on the strength of a clean sanctions check alone. It states that a PEP-type signal is present and outside its scoped checks, and escalates for manual review. A Pass recommendation that does not mention the note is a failed run." }
+];
+
+/* ---------- THE AGENT: system prompt compiled from the Design PRD ---------- */
+
+const MODEL = "claude-sonnet-4-5";
+const API_KEY_STORAGE_KEY = "screengate_anthropic_api_key";
+
+const ESCALATION_POLICY = `Section 1 - Confirmed Watchlist Hit
+If a counterparty or beneficiary bank name matches a watchlist entity, and the available identity fields (date of birth or incorporation date, nationality, ID number) also match, the hit is Confirmed. A Confirmed hit must never be recommended Pass. Escalate directly to the compliance manager, regardless of transaction amount or jurisdiction risk tier.
+
+Section 2 - Unresolved Identity Match
+If a counterparty or beneficiary bank name matches a watchlist entity, but the identity fields needed to compare (date of birth or incorporation date, nationality, or ID number) are missing from the counterparty profile, the hit cannot be cleared or confirmed. Mark the result Unresolved. Escalate before issuing any Pass or EDD recommendation. Never guess or infer a missing field.
+
+Section 3 - Cleared Hit (False Positive)
+If a counterparty or beneficiary bank name matches a watchlist entity, but at least one identity field (date of birth or incorporation date, nationality, or ID number) is present for both records and differs, the hit is Cleared. The agent must cite the specific field(s) that differ. A Cleared hit may be recommended Pass. Clearing a hit without citing the specific differentiating field is a policy violation.
+
+Section 4 - Missing Required Data
+If a required transaction field (counterparty name, beneficiary bank name, amount, or jurisdiction) is absent from the transaction record, escalate before issuing any recommendation. Do not proceed with a partial screening.
+
+Section 5 - Adverse Media or Legal-Action Signals
+If the transaction notes or counterparty profile contain any signal of fraud, criminal activity, or regulatory action tied to the counterparty or its owners, escalate. Assessing adverse media is out of this agent's judgment scope.
+
+Section 6 - Out-of-Corridor or Unscoped Check Type
+If the transaction falls outside the UAE-India or UAE-UK corridor, or if the transaction notes surface a signal requiring a check type this agent does not perform - Politically Exposed Person (PEP) status or Ultimate Beneficial Owner (UBO) verification - escalate for manual handling. A clean sanctions screening result does not authorize a Pass recommendation when an unscoped signal is present. State plainly which unscoped check is implicated.
+
+Section 7 - High-Risk Jurisdiction Exposure
+If the counterparty or beneficiary bank is domiciled in a jurisdiction rated Black in the jurisdiction risk tiers, and no watchlist name match exists, recommend Enhanced Due Diligence rather than a plain Pass, citing the jurisdiction's risk tier. A jurisdiction rated Grey does not by itself require EDD but should be noted in the findings report. A jurisdiction rated Clear requires no additional jurisdiction-based action.
+
+Section 8 - Human Authority
+The agent's output is a recommendation only. It has no authority to clear, block, or escalate a transaction on its own. The compliance analyst makes the final Pass / EDD / Escalate decision.`;
+
+const SYSTEM_PROMPT = `ROLE: You are the Screening Agent for ScreenGate. You screen the counterparty entity and beneficiary bank of a flagged cross-border payment (UAE-India or UAE-UK corridor) against a sanctions/high-risk watchlist, for a compliance analyst. You operate within a recommend-only boundary: you never decide Pass / Enhanced Due Diligence (EDD) / Escalate - you only recommend, with reasons. You escalate when a name-match hit cannot be cleared with cited reasoning.
+
+CONTEXT: You have access to the following context, embedded below. Use only this context. Never invent facts, entities, or policy language that is not present here.
+
+WATCHLIST (fictional sanctioned/high-risk entities - JSON):
+${JSON.stringify(WATCHLIST)}
+
+JURISDICTION RISK TIERS (JSON):
+${JSON.stringify(JURISDICTION_RISK_TIERS)}
+
+ESCALATION AND SCREENING POLICY:
+${ESCALATION_POLICY}
+
+RULES - you must not:
+- Interpret jurisdiction or regulatory requirements yourself beyond citing the jurisdiction risk tier provided above; that judgment stays fully manual.
+- Make the final Pass, Enhanced Due Diligence, or Escalate decision. That decision is always human-decided. You only provide a recommendation.
+- Assess Politically Exposed Person (PEP) status, Ultimate Beneficial Owner (UBO) structure, or adverse media yourself. If any of these signals appear in the transaction notes, state that the signal is present and outside your scope, and recommend escalation for manual handling - do not evaluate the signal's substance.
+- Clear or confirm a watchlist hit without citing the specific identity field (date of birth or incorporation date, nationality, or ID number) that supports your conclusion.
+- Reuse or assume any past clearance. Screen every transaction fresh, every run, using only the context embedded above.
+- Take any action with consequences. You never have the authority to clear, block, or escalate a transaction on your own.
+- Invent, guess, or paraphrase a record ID, watchlist entity ID, or policy section number. Cite only IDs and section numbers that actually appear in the embedded context above. If a required transaction field is missing, say exactly what is missing and escalate - never invent a plausible-sounding value to fill the gap.
+- When describing which name matched a watchlist entity, name only the single field (the entity's primary name, its strong alias, or its weak alias) whose text is actually equal or closely similar to the name that appears in THIS transaction. Never list a watchlist entity's other aliases as part of the match just because they belong to the same entity - if the transaction name did not resemble that alias, it played no part in this match and must not be cited as if it did.
+
+OUTPUT: Respond with exactly these labeled fields, one per line, in this order:
+TRANSACTION_ID: <the transaction id>
+CORRIDOR: <UAE-India or UAE-UK>
+TRIGGER_CRITERIA_MET: <list all that apply: new-counterparty, over-threshold, high-risk-jurisdiction, or none>
+COUNTERPARTY_SCREENING_RESULT: <No match / Cleared / Confirmed / Unresolved>
+BENEFICIARY_BANK_SCREENING_RESULT: <No match / Cleared / Confirmed / Unresolved>
+CITATIONS: <comma-separated exact source IDs you actually used - watchlist entity IDs like WL-005, the transaction ID, escalation policy section numbers like "Section 3". Write "none" only if genuinely no watchlist entity or policy section applied.>
+CITED_REASONING: <the specific field, policy section, or data point used to reach your result; if a name match applies, name exactly which single field matched (primary name / strong alias / weak alias) - never list additional aliases that did not match; say "insufficient data" if unresolved>
+PRIOR_TRANSACTION_HISTORY: <restate the prior history field from the transaction, as context only - never used to skip a check>
+RECOMMENDED_DECISION: <Pass / Enhanced Due Diligence / Escalate>
+WHY: <one to two sentences in your own words explaining the decision, naming the specific data point(s) and policy section(s) you applied. If RECOMMENDED_DECISION is Escalate, begin this field with the exact word "REFUSED" followed by a dash and the specific policy section number that requires escalation, for example: "REFUSED - Section 1: Confirmed Watchlist Hit. ..." >
+
+If RECOMMENDED_DECISION is Escalate, you are refusing to clear this transaction. State that refusal explicitly in WHY as instructed above - never soften a required escalation into a Pass or an unstated EDD.
+
+ESCALATION: Stop and recommend Escalate, stating the reason, when any of the following apply: a Confirmed watchlist hit (Section 1); an Unresolved identity match (Section 2); missing required transaction data (Section 4); adverse media or legal-action signals (Section 5); an out-of-corridor transaction or an unscoped check type such as PEP or UBO (Section 6); or any case where you are not confident a hit is genuinely cleared. When in doubt, escalate rather than guess.`;
+
+/* ---------- Helpers shared by rendering ---------- */
+
+function findProfile(name) {
+  return COUNTERPARTY_PROFILES.find(function (p) { return p.name === name; });
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function renderProfileLine(profile) {
+  if (!profile) return "No profile on file.";
+  return "DOB/Incorporation: " + (profile.dobOrIncorporation || "(missing)") +
+    " | Nationality: " + (profile.nationality || "(missing)") +
+    " | ID: " + (profile.idNumber || "(missing)") + " (" + (profile.idIssuingCountry || "-") + ")" +
+    " | Address: " + profile.address +
+    (profile.notes ? " | Notes: " + profile.notes : "");
+}
+
+function triggerList(t) {
+  const list = [];
+  if (t.triggerNewCounterparty) list.push("new-counterparty");
+  if (t.triggerOverThreshold) list.push("over-threshold");
+  if (t.triggerHighRiskJurisdiction) list.push("high-risk-jurisdiction");
+  return list.length ? list.join(", ") : "none";
+}
+
+/* ---------- THE CONSOLE: left panel (cases), main panel (selected case) ---------- */
+
+let selectedCaseId = null;
+
+function selectCase(id) {
+  selectedCaseId = id;
+  renderCaseList();
+  renderMainPanel();
+}
+
+/* Short chip labels for the eval cases - full names/descriptions live in EVAL_CASES for the Evals view (Section C) */
+const EVAL_CHIP_LABELS = {
+  "EC-1": "Happy path",
+  "EC-2": "Missing data",
+  "EC-3": "False positive",
+  "EC-4": "Multi-trigger",
+  "EC-5": "Boundary — must refuse",
+  "EC-6": "Out-of-policy PEP"
+};
+
+/* ---------- Path B1: the case list as a working queue ---------- */
+
+const QUEUE_STATES = [
+  { key: "new", label: "New", badge: "neutral" },
+  { key: "review", label: "In review", badge: "info" },
+  { key: "approved", label: "Approved", badge: "ok" },
+  { key: "escalated", label: "Escalated", badge: "danger" }
+];
+
+let queueFilter = "all";
+
+/* New = never run. In review = the agent has produced a result, no final human decision yet
+   (an Edit alone does not close a case). Approved / Escalated = the human's latest action. */
+function caseState(id) {
+  const human = (CASE_HUMAN_STATE[id] || "").toLowerCase();
+  if (human.indexOf("escalate") !== -1) return "escalated";
+  if (human.indexOf("approve") !== -1) return "approved";
+  if (CASE_RESULTS[id]) return "review";
+  return "new";
+}
+
+function queueCounts() {
+  const counts = { new: 0, review: 0, approved: 0, escalated: 0 };
+  TRANSACTIONS.forEach(function (t) { counts[caseState(t.id)]++; });
+  return counts;
+}
+
+function setQueueFilter(filter) {
+  queueFilter = filter;
+  renderCaseList();
+}
+
+/* Run All progress/summary live in variables so they survive the list re-rendering
+   every time a case changes state mid-sweep. */
+let runAllProgressText = "";
+let runAllSummaryHtml = "";
+
+function renderCaseList() {
+  const body = document.getElementById("caseListBody");
+  const counts = queueCounts();
+
+  const head = document.getElementById("caseListHead");
+  head.innerHTML = "Cases (" + TRANSACTIONS.length + ")" +
+    "<div style=\"font-weight:400; letter-spacing:0; text-transform:none; color: var(--ink-3); margin-top: var(--sp-1);\">" +
+    QUEUE_STATES.map(function (s) { return s.label + " " + counts[s.key]; }).join(" &middot; ") + "</div>";
+
+  const smallLabel = "font-size: var(--fs-0); color: var(--ink-3); margin-bottom: var(--sp-1);";
+  let html = "";
+  html += "<div style=\"" + smallLabel + "\">Demo cases</div>";
+  html += "<div style=\"margin-bottom: var(--sp-4);\">";
+  EVAL_CASES.forEach(function (ec) {
+    html += "<span class=\"chip\" onclick=\"selectCase('" + ec.transactionId + "')\" title=\"" + escapeHtml(ec.name) + "\">" +
+      escapeHtml(EVAL_CHIP_LABELS[ec.caseId] || ec.name) + "</span> ";
+  });
+  html += "</div>";
+
+  html += "<div style=\"" + smallLabel + "\">Filter by state</div>";
+  html += "<div style=\"margin-bottom: var(--sp-4);\">";
+  [{ key: "all", label: "All" }].concat(QUEUE_STATES).forEach(function (s) {
+    const active = queueFilter === s.key;
+    html += "<span class=\"chip\" style=\"" + (active ? "border-color: var(--accent); color: var(--ink);" : "") + "\" onclick=\"setQueueFilter('" + s.key + "')\">" +
+      escapeHtml(s.label) + "</span> ";
+  });
+  html += "</div>";
+
+  html += "<button class=\"btn primary\" onclick=\"runAll()\">Run All</button>";
+  html += "<div id=\"runAllProgress\" class=\"boundary-note\">" + escapeHtml(runAllProgressText) + "</div>";
+  html += "<div id=\"runAllSummary\">" + runAllSummaryHtml + "</div>";
+  html += "<div style=\"margin-top: var(--sp-4);\">";
+
+  const visible = TRANSACTIONS.filter(function (t) { return queueFilter === "all" || caseState(t.id) === queueFilter; });
+  if (visible.length === 0) {
+    html += "<p class=\"boundary-note\">No cases in this state.</p>";
+  }
+  visible.forEach(function (t) {
+    const isActive = t.id === selectedCaseId;
+    const stateKey = caseState(t.id);
+    const stateDef = QUEUE_STATES.filter(function (s) { return s.key === stateKey; })[0];
+    const humanAction = CASE_HUMAN_STATE[t.id];
+    const badgeText = humanAction || stateDef.label;
+    const badgeClass = humanAction ? humanActionBadgeClass(humanAction) : stateDef.badge;
+    html += "<div class=\"case-card" + (isActive ? " active" : "") + "\" onclick=\"selectCase('" + t.id + "')\">" +
+      "<div class=\"id\">" + t.id + "</div>" +
+      "<div class=\"title\">" + escapeHtml(t.counterparty) + "</div>" +
+      "<span class=\"badge " + badgeClass + "\" style=\"margin-top: var(--sp-1);\">" + escapeHtml(badgeText) + "</span>" +
+      "</div>";
+  });
+  html += "</div>";
+  body.innerHTML = html;
+}
+
+function renderMainPanel() {
+  const body = document.getElementById("mainWorkArea");
+
+  if (!selectedCaseId) {
+    let hasKey = false;
+    try { hasKey = !!localStorage.getItem(API_KEY_STORAGE_KEY); } catch (err) { hasKey = false; }
+
+    let html = "<div class=\"empty\">";
+    html += "<div class=\"headline\">ScreenGate</div>";
+    html += "<p>Screens counterparties and beneficiary banks in cross-border payments against a sanctions watchlist, and recommends Pass, Enhanced Due Diligence, or Escalate - a human always makes the final call.</p>";
+    if (!hasKey) {
+      html += "<p class=\"boundary-note\">No API key saved yet. Open Settings above and paste your Anthropic API key before running a case.</p>";
+    }
+    html += "<p>Click a case card, or one of the chips above them, to see its details and run the agent.</p>";
+    html += "</div>";
+    body.innerHTML = html;
+    return;
+  }
+
+  const t = TRANSACTIONS.find(function (x) { return x.id === selectedCaseId; });
+  const counterpartyProfile = findProfile(t.counterparty);
+  const bankProfile = findProfile(t.beneficiaryBank);
+
+  let html = "";
+  html += "<h2 style=\"font-size: var(--fs-3); margin: 0 0 var(--sp-2);\">" + t.id + " &mdash; " + t.corridor + " &mdash; $" + t.amountUsd.toLocaleString() + "</h2>";
+
+  html += "<div class=\"stage\" data-n=\"1\">Input</div>";
+  html += "<div class=\"field\"><div class=\"k\">Transaction</div><div class=\"v\">" + t.id + ", " + t.corridor + ", $" + t.amountUsd.toLocaleString() + "</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Counterparty</div><div class=\"v\">" + escapeHtml(t.counterparty) + " (" + escapeHtml(t.counterpartyJurisdiction) + ")</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Beneficiary Bank</div><div class=\"v\">" + escapeHtml(t.beneficiaryBank) + " (" + escapeHtml(t.beneficiaryBankJurisdiction) + ")</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Triggers</div><div class=\"v\">" + escapeHtml(triggerList(t)) + "</div></div>";
+
+  html += "<div class=\"stage\" data-n=\"2\">Context</div>";
+  html += "<div class=\"field\"><div class=\"k\">Counterparty Profile</div><div class=\"v\">" + escapeHtml(renderProfileLine(counterpartyProfile)) + "</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Bank Profile</div><div class=\"v\">" + escapeHtml(renderProfileLine(bankProfile)) + "</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Prior History</div><div class=\"v\">" + escapeHtml(t.priorHistory) + "</div></div>";
+  if (t.notes) html += "<div class=\"field\"><div class=\"k\">Notes</div><div class=\"v\">" + escapeHtml(t.notes) + "</div></div>";
+  html += "<p class=\"boundary-note\">The agent also reads the full watchlist, jurisdiction risk tiers, and escalation policy on every run - not shown here per case since they are the same for all cases.</p>";
+
+  html += "<div style=\"margin-top: var(--sp-4);\"><button class=\"btn primary\" onclick=\"runCase('" + t.id + "')\">Run</button></div>";
+  html += "<div id=\"result-" + t.id + "\" style=\"margin-top: var(--sp-4);\">";
+
+  const cached = CASE_RESULTS[t.id];
+  const cachedIsRealResult = cached && cached.RECOMMENDED_DECISION &&
+    cached.RECOMMENDED_DECISION !== "(unparsed output)" && cached.RECOMMENDED_DECISION !== "(no decision)";
+  if (cachedIsRealResult) {
+    html += renderParsedOutput(cached, t.id);
+  }
+
+  html += "</div>";
+
+  body.innerHTML = html;
+}
+
+/* ---------- Wiring the agent: one live decision per Run click ---------- */
+
+const OUTPUT_FIELDS = [
+  ["TRANSACTION_ID", "Transaction ID"],
+  ["CORRIDOR", "Corridor"],
+  ["TRIGGER_CRITERIA_MET", "Trigger Criteria Met"],
+  ["COUNTERPARTY_SCREENING_RESULT", "Counterparty Screening Result"],
+  ["BENEFICIARY_BANK_SCREENING_RESULT", "Beneficiary Bank Screening Result"],
+  ["CITED_REASONING", "Cited Reasoning"],
+  ["PRIOR_TRANSACTION_HISTORY", "Prior Transaction History"],
+  ["RECOMMENDED_DECISION", "Recommended Decision"],
+  ["WHY", "Why"]
+];
+
+/* CITATIONS is rendered separately as tags, not as a plain labeled row - kept out of OUTPUT_FIELDS */
+const CITATIONS_KEY = "CITATIONS";
+
+function parseAgentOutput(text) {
+  const keySet = OUTPUT_FIELDS.map(function (f) { return f[0]; }).concat([CITATIONS_KEY]);
+  const values = {};
+  let currentKey = null;
+  text.split("\n").forEach(function (line) {
+    const match = line.match(/^([A-Z_]+):\s?(.*)$/);
+    if (match && keySet.indexOf(match[1]) !== -1) {
+      currentKey = match[1];
+      values[currentKey] = match[2];
+    } else if (currentKey && line.trim()) {
+      values[currentKey] += " " + line.trim();
+    }
+  });
+  const requiredPresent = ["CITATIONS", "CITED_REASONING", "RECOMMENDED_DECISION", "WHY"].every(function (k) {
+    return values[k] && values[k].trim().length > 0;
+  });
+  if (!requiredPresent) return null;
+  return values;
+}
+
+function renderCitationTags(citationsText) {
+  if (!citationsText) return "";
+  const items = citationsText.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return s && s.toLowerCase() !== "none"; });
+  if (items.length === 0) return "<p class=\"boundary-note\">No specific record or policy section cited.</p>";
+  return "<div style=\"margin: var(--sp-3) 0;\">" + items.map(function (item) {
+    return "<span class=\"chip cite\">" + escapeHtml(item) + "</span>";
+  }).join(" ") + "</div>";
+}
+
+/* Shown under stage 3 DECISION (the narrative "what and why"); everything else in
+   OUTPUT_FIELDS renders under stage 4 OUTPUT instead. */
+const DECISION_FIELD_KEYS = ["RECOMMENDED_DECISION", "WHY"];
+
+function renderParsedOutput(values, transactionId) {
+  const decision = (values.RECOMMENDED_DECISION || "").toLowerCase();
+  const isEscalation = decision.indexOf("escalate") !== -1;
+  const badgeClass = isEscalation ? "danger" : "ok";
+  const statusText = isEscalation ? "REFUSED-ESCALATE" : "OK";
+
+  let html = "<div class=\"stage\" data-n=\"3\">Decision</div>";
+  html += "<span class=\"badge " + badgeClass + "\">" + statusText + "</span>";
+  OUTPUT_FIELDS.forEach(function (f) {
+    const key = f[0], label = f[1];
+    if (DECISION_FIELD_KEYS.indexOf(key) === -1) return;
+    const isWhy = key === "WHY";
+    html += "<div class=\"field\"><div class=\"k\">" + escapeHtml(label) + "</div><div class=\"v" + (isWhy ? " why" : "") + "\">" +
+      escapeHtml(values[key] || "(not provided)") + "</div></div>";
+  });
+
+  html += "<div class=\"stage\" data-n=\"4\">Output</div>";
+  html += renderCitationTags(values.CITATIONS);
+  OUTPUT_FIELDS.forEach(function (f) {
+    const key = f[0], label = f[1];
+    if (DECISION_FIELD_KEYS.indexOf(key) !== -1) return;
+    html += "<div class=\"field\"><div class=\"k\">" + escapeHtml(label) + "</div><div class=\"v\">" +
+      escapeHtml(values[key] || "(not provided)") + "</div></div>";
+  });
+
+  html += "<div class=\"stage\" data-n=\"5\">Review</div>";
+  html += renderGate(transactionId);
+  return html;
+}
+
+/* ---------- The human gate: nothing is complete without a click ---------- */
+
+const CASE_RESULTS = {};
+const RUN_LOG = [];
+
+/* The human's final action per case (Approved / Edited / Escalated / Approved (override)) -
+   separate from CASE_RESULTS, which holds the AGENT's recommendation. Drives the case-card badges. */
+const CASE_HUMAN_STATE = {};
+
+function humanActionBadgeClass(action) {
+  const lower = (action || "").toLowerCase();
+  if (lower.indexOf("escalate") !== -1) return "danger";
+  if (lower.indexOf("edit") !== -1) return "warn";
+  if (lower.indexOf("approve") !== -1) return "ok";
+  return "neutral";
+}
+
+function renderGate(id) {
+  return "<div style=\"margin-top: var(--sp-4); display:flex; gap: var(--sp-2); align-items:center; flex-wrap: wrap;\">" +
+    "<button class=\"btn approve\" onclick=\"approveCase('" + id + "')\">Approve</button>" +
+    "<button class=\"btn\" onclick=\"startEdit('" + id + "')\">Edit</button>" +
+    "<button class=\"btn danger\" onclick=\"escalateCase('" + id + "')\">Escalate</button>" +
+    "<span id=\"gateStatus-" + id + "\" style=\"font-size: var(--fs-0); color: var(--ink-3);\"></span>" +
+    "</div>" +
+    "<div id=\"editArea-" + id + "\" style=\"display:none; margin-top: var(--sp-3);\">" +
+    "<textarea id=\"editText-" + id + "\" rows=\"3\" style=\"width:100%; font-family: var(--font-body); font-size: var(--fs-1); background: var(--bg-inset); color: var(--ink); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); padding: var(--sp-2);\"></textarea><br>" +
+    "<button class=\"btn primary\" style=\"margin-top: var(--sp-2);\" onclick=\"saveEdit('" + id + "')\">Save edit</button>" +
+    "</div>" +
+    "<p class=\"boundary-note\">Nothing is sent without human approval.</p>";
+}
+
+function logRun(transactionId, humanAction, note) {
+  const result = CASE_RESULTS[transactionId];
+  RUN_LOG.push({
+    time: new Date().toLocaleTimeString(),
+    transactionId: transactionId,
+    agentDecision: (result && result.RECOMMENDED_DECISION) || "(no decision)",
+    humanAction: humanAction,
+    note: note || ""
+  });
+  CASE_HUMAN_STATE[transactionId] = humanAction;
+  const statusEl = document.getElementById("gateStatus-" + transactionId);
+  if (statusEl) statusEl.textContent = humanAction + " at " + new Date().toLocaleTimeString() + (note ? " - " + note : "");
+  renderRunLog();
+  renderCaseList();
+}
+
+function approveCase(id) {
+  const result = CASE_RESULTS[id];
+  const decision = ((result && result.RECOMMENDED_DECISION) || "").toLowerCase();
+  const wasEscalation = decision.indexOf("escalate") !== -1;
+
+  if (wasEscalation) {
+    const confirmed = confirm("The agent recommended escalation for this case. Approve anyway? This will be logged as a human override.");
+    if (!confirmed) return;
+    logRun(id, "Approved (override)", "");
+    return;
+  }
+
+  logRun(id, "Approved", "");
+}
+
+function escalateCase(id) {
+  const reason = prompt("One-line reason for escalating this case to the compliance manager:");
+  if (reason === null) return;
+  logRun(id, "Escalated", reason);
+}
+
+function startEdit(id) {
+  const area = document.getElementById("editArea-" + id);
+  const textarea = document.getElementById("editText-" + id);
+  const result = CASE_RESULTS[id];
+  textarea.value = result && result.WHY ? result.WHY : "";
+  area.style.display = "block";
+}
+
+function saveEdit(id) {
+  const textarea = document.getElementById("editText-" + id);
+  const editedText = textarea.value;
+  if (CASE_RESULTS[id]) CASE_RESULTS[id].WHY = editedText;
+  document.getElementById("editArea-" + id).style.display = "none";
+  logRun(id, "Edited", editedText);
+}
+
+function renderRunLog() {
+  const panel = document.getElementById("runLogPanel");
+  const countEl = document.getElementById("runLogCount");
+  if (countEl) countEl.textContent = RUN_LOG.length;
+
+  if (RUN_LOG.length === 0) {
+    panel.innerHTML = "<p class=\"boundary-note\">No human actions recorded yet. Run a case, then Approve, Edit, or Escalate it.</p>";
+    return;
+  }
+
+  let html = "";
+  RUN_LOG.slice().reverse().forEach(function (entry) {
+    const actionLower = entry.humanAction.toLowerCase();
+    const actionClass = actionLower.indexOf("approve") !== -1 ? "action-approve"
+      : actionLower.indexOf("edit") !== -1 ? "action-edit"
+      : "action-escalate";
+    html += "<div class=\"row\"><span class=\"t\">" + escapeHtml(entry.time) + "</span><span>" +
+      escapeHtml(entry.transactionId) + " &mdash; " + escapeHtml(entry.agentDecision) + " &mdash; " +
+      "<span class=\"" + actionClass + "\">" + escapeHtml(entry.humanAction) + "</span>" +
+      (entry.note ? " (" + escapeHtml(entry.note) + ")" : "") + "</span></div>";
+  });
+  panel.innerHTML = html;
+}
+
+/* ---------- Section C: the Evals view ---------- */
+
+function showView(view) {
+  document.getElementById("consoleView").style.display = view === "console" ? "grid" : "none";
+  document.getElementById("evalsView").style.display = view === "evals" ? "block" : "none";
+  document.getElementById("navConsoleBtn").classList.toggle("primary", view === "console");
+  document.getElementById("navEvalsBtn").classList.toggle("primary", view === "evals");
+  if (view === "evals") renderEvalsView();
+}
+
+/* Persisted per case: { actual, verdict, note }. The human's own judgment - the agent
+   never grades itself. Survives reload via localStorage, unlike CASE_RESULTS/RUN_LOG. */
+const EVAL_STORAGE_KEY = "screengate_eval_records";
+
+function loadEvalRecords() {
+  try {
+    const raw = localStorage.getItem(EVAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (err) {
+    return {};
+  }
+}
+
+function saveEvalRecords() {
+  try {
+    localStorage.setItem(EVAL_STORAGE_KEY, JSON.stringify(EVAL_RECORDS));
+  } catch (err) {
+    /* localStorage unavailable - eval state stays in memory for this session only */
+  }
+}
+
+const EVAL_RECORDS = loadEvalRecords();
+
+function setEvalField(caseId, field, value) {
+  if (!EVAL_RECORDS[caseId]) EVAL_RECORDS[caseId] = {};
+  EVAL_RECORDS[caseId][field] = value;
+  saveEvalRecords();
+}
+
+function computeEvalStats() {
+  let pass = 0, needsWork = 0, fail = 0, totalRun = 0, lastRun = null;
+  EVAL_CASES.forEach(function (ec) {
+    const r = EVAL_RECORDS[ec.caseId];
+    if (!r) return;
+    if (r.verdict === "Pass") pass++;
+    else if (r.verdict === "Needs work") needsWork++;
+    else if (r.verdict === "Fail") fail++;
+    if (r.actual) totalRun++;
+    if (r.lastRun && (!lastRun || r.lastRun > lastRun)) lastRun = r.lastRun;
+  });
+  return { pass: pass, needsWork: needsWork, fail: fail, totalRun: totalRun, lastRun: lastRun };
+}
+
+function statBlock(cls, n, label) {
+  return "<div class=\"stat" + (cls ? " " + cls : "") + "\"><div class=\"n\">" + escapeHtml(String(n)) + "</div><div class=\"l\">" + escapeHtml(label) + "</div></div>";
+}
+
+function renderEvalScoreboard() {
+  const s = computeEvalStats();
+  const lastRunText = s.lastRun ? new Date(s.lastRun).toLocaleString() : "Never";
+  let html = "<div class=\"scoreboard\">";
+  html += statBlock("ok", s.pass, "Pass");
+  html += statBlock("warn", s.needsWork, "Needs Work");
+  html += statBlock("danger", s.fail, "Fail");
+  html += statBlock("", s.totalRun + " / " + EVAL_CASES.length, "Cases Run");
+  html += statBlock("", lastRunText, "Last Run");
+  html += "</div>";
+  return html;
+}
+
+/* ---------- The Improvement card: before / change / after, part of the demo evidence ---------- */
+
+const IMPROVEMENT_STORAGE_KEY = "screengate_improvement_card";
+
+function loadImprovement() {
+  try {
+    const raw = localStorage.getItem(IMPROVEMENT_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (err) { /* fall through to default */ }
+  return {
+    before: "On a stress-test transaction (T-1016 - counterparty name matching WL-005's weak alias \"Raj Malhotra\", with identical DOB, nationality, and ID number to WL-005), the agent correctly recommended Escalate on the confirmed hit, but its Cited Reasoning overclaimed the match: it stated the name matched both WL-005's strong alias \"R. Malhotra\" and weak alias \"Raj Malhotra\", when only the weak alias actually matched the transaction's counterparty name. \"R. Malhotra\" never appeared anywhere in the transaction data.",
+    change: "Added a system prompt rule forbidding the agent from citing a watchlist entity's other aliases just because they belong to the same record, and tightened the CITED_REASONING field instructions to require naming exactly the one field (primary name, strong alias, or weak alias) that actually matched the current transaction.",
+    after: "Re-running T-1016 now produces: Cited Reasoning states the counterparty name matches only \"the weak alias of watchlist entity WL-005\", with no mention of the strong alias. The Escalate decision, the WL-005/T-1016/Section 1 citations, and every identity-field comparison are unchanged - only the imprecise over-claim was removed."
+  };
+}
+
+function saveImprovement() {
+  try { localStorage.setItem(IMPROVEMENT_STORAGE_KEY, JSON.stringify(IMPROVEMENT)); } catch (err) { /* in-memory only */ }
+}
+
+const IMPROVEMENT = loadImprovement();
+
+function setImprovementField(field, value) {
+  IMPROVEMENT[field] = value;
+  saveImprovement();
+}
+
+function improvementRow(field, label) {
+  return "<div class=\"field\"><div class=\"k\">" + escapeHtml(label) + "</div><div class=\"v\">" +
+    "<textarea rows=\"3\" style=\"width:100%; font-family: var(--font-body); font-size: var(--fs-1); background: var(--bg-inset); color: var(--ink); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); padding: var(--sp-2);\" onchange=\"setImprovementField('" + field + "', this.value)\">" +
+    escapeHtml(IMPROVEMENT[field]) + "</textarea></div></div>";
+}
+
+function renderImprovementCard() {
+  let html = "<div class=\"panel\" style=\"margin-top: var(--sp-4);\">";
+  html += "<div class=\"panel-head\">Improvement</div>";
+  html += "<div class=\"panel-body\">";
+  html += improvementRow("before", "Before");
+  html += improvementRow("change", "Change");
+  html += improvementRow("after", "After");
+  html += "</div></div>";
+  return html;
+}
+
+/* ---------- Known limitations - honest, specific, not a confession ---------- */
+
+const LIMITATIONS_STORAGE_KEY = "screengate_known_limitations";
+
+function loadLimitations() {
+  try {
+    const raw = localStorage.getItem(LIMITATIONS_STORAGE_KEY);
+    if (raw) return raw;
+  } catch (err) { /* fall through to default */ }
+  return [
+    "Screens only sanctions/watchlist name matches for the UAE-India and UAE-UK corridors. It does not perform PEP, UBO, or adverse media checks - those are always escalated for manual review, never assessed by the agent.",
+    "Processes one transaction at a time, or a manual sequential sweep via Run All. There is no live payment feed, no queue, and nothing triggers the agent automatically when a new transaction arrives.",
+    "Requires data in this prototype's exact format - the embedded watchlist, counterparty profiles, and transaction records. It cannot ingest a differently structured feed or a free-text case description without rebuilding the data layer.",
+    "English-only. The watchlist, policy text, and agent reasoning have not been tested against non-English names, aliases, or transliteration variants, which is a real challenge in cross-border sanctions screening.",
+    "Name matching relies entirely on the model's own judgment - no dedicated fuzzy-matching algorithm, no confidence score, and no evaluation against a large adversarial test set beyond the 6 eval cases and one stress test built here."
+  ].join("\n");
+}
+
+function saveLimitations() {
+  try { localStorage.setItem(LIMITATIONS_STORAGE_KEY, KNOWN_LIMITATIONS); } catch (err) { /* in-memory only */ }
+}
+
+let KNOWN_LIMITATIONS = loadLimitations();
+
+function setLimitationsText(value) {
+  KNOWN_LIMITATIONS = value;
+  saveLimitations();
+}
+
+function renderLimitationsPanel() {
+  let html = "<div class=\"panel\" style=\"margin-top: var(--sp-4);\">";
+  html += "<div class=\"panel-head\">Known Limitations</div>";
+  html += "<div class=\"panel-body\">";
+  html += "<p class=\"boundary-note\">Scope decisions, stated plainly - not confessions. One per line.</p>";
+  html += "<textarea rows=\"6\" style=\"width:100%; font-family: var(--font-body); font-size: var(--fs-1); background: var(--bg-inset); color: var(--ink); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); padding: var(--sp-2);\" onchange=\"setLimitationsText(this.value)\">" +
+    escapeHtml(KNOWN_LIMITATIONS) + "</textarea>";
+  html += "</div></div>";
+  return html;
+}
+
+function renderEvalsView() {
+  const body = document.getElementById("evalsBody");
+  let html = renderEvalScoreboard();
+  html += "<table class=\"evals-table\"><tr><th>Case</th><th>Expected Behavior</th><th>Actual</th><th>Verdict</th><th>Note</th><th></th></tr>";
+  EVAL_CASES.forEach(function (ec) {
+    const record = EVAL_RECORDS[ec.caseId] || {};
+    const savedVerdict = record.verdict || "";
+    const savedNote = record.note || "";
+    const actualText = record.actual || "";
+
+    html += "<tr>";
+    html += "<td><strong>" + escapeHtml(ec.caseId) + "</strong><br>" + escapeHtml(ec.name) + "<br><span style=\"color: var(--ink-3); font-family: var(--font-mono); font-size: var(--fs-0);\">" + escapeHtml(ec.transactionId) + "</span></td>";
+    html += "<td>" + escapeHtml(ec.expected) + "</td>";
+    html += "<td id=\"eval-actual-" + ec.caseId + "\">" + escapeHtml(actualText) + "</td>";
+    html += "<td><select id=\"eval-verdict-" + ec.caseId + "\" onchange=\"setEvalField('" + ec.caseId + "', 'verdict', this.value)\">" +
+      "<option value=\"\"" + (savedVerdict === "" ? " selected" : "") + ">-</option>" +
+      "<option value=\"Pass\"" + (savedVerdict === "Pass" ? " selected" : "") + ">Pass</option>" +
+      "<option value=\"Needs work\"" + (savedVerdict === "Needs work" ? " selected" : "") + ">Needs work</option>" +
+      "<option value=\"Fail\"" + (savedVerdict === "Fail" ? " selected" : "") + ">Fail</option>" +
+      "</select></td>";
+    html += "<td><input type=\"text\" placeholder=\"one-line note...\" value=\"" + escapeHtml(savedNote) + "\" style=\"width:100%; font-family: var(--font-body); font-size: var(--fs-0); background: var(--bg-inset); color: var(--ink); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); padding: 6px 8px;\" onchange=\"setEvalField('" + ec.caseId + "', 'note', this.value)\"></td>";
+    html += "<td><button class=\"btn\" onclick=\"runEvalCase('" + ec.caseId + "')\">Run</button></td>";
+    html += "</tr>";
+  });
+  html += "</table>";
+  html += renderImprovementCard();
+  html += renderLimitationsPanel();
+  body.innerHTML = html;
+}
+
+async function runEvalCase(caseId) {
+  const ec = EVAL_CASES.find(function (e) { return e.caseId === caseId; });
+  const actualEl = document.getElementById("eval-actual-" + caseId);
+  actualEl.innerHTML = "<span class=\"thinking\">Thinking...</span>";
+
+  await runCaseCore(ec.transactionId);
+
+  const result = CASE_RESULTS[ec.transactionId];
+  const isReal = result && result.RECOMMENDED_DECISION &&
+    result.RECOMMENDED_DECISION !== "(unparsed output)" && result.RECOMMENDED_DECISION !== "(no decision)";
+  const actualText = isReal
+    ? "Decision: " + result.RECOMMENDED_DECISION + ". " + (result.WHY || "")
+    : "Error or unparsed output - open Console view and run " + ec.transactionId + " to see details.";
+
+  setEvalField(caseId, "actual", actualText);
+  setEvalField(caseId, "lastRun", new Date().toISOString());
+  actualEl.textContent = actualText;
+  renderEvalsView();
+  renderCaseList();
+}
+
+function buildCaseMessage(t) {
+  const counterpartyProfile = findProfile(t.counterparty);
+  const bankProfile = findProfile(t.beneficiaryBank);
+  return "TRANSACTION:\n" + JSON.stringify(t, null, 2) +
+    "\n\nCOUNTERPARTY PROFILE:\n" + JSON.stringify(counterpartyProfile || null, null, 2) +
+    "\n\nBENEFICIARY BANK PROFILE:\n" + JSON.stringify(bankProfile || null, null, 2) +
+    "\n\nScreen this transaction now and respond using exactly the OUTPUT format given in your instructions.";
+}
+
+/* Runs one case against the live API. Returns "ok", "escalate", or "error" so callers
+   (a single Run click, or Run All) can both update the UI and tally an outcome. */
+/* resultEl (the case's box in the Console view) may not exist - e.g. when this is called
+   from the Evals view for a case that isn't the currently selected one in Console. The API
+   call and CASE_RESULTS update always happen; the Console-view DOM update is best-effort. */
+async function runCaseCore(transactionId) {
+  const t = TRANSACTIONS.find(function (x) { return x.id === transactionId; });
+  const resultEl = document.getElementById("result-" + transactionId);
+  const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+
+  if (!apiKey) {
+    if (resultEl) resultEl.innerHTML = "<div class=\"error-note\">No API key saved. Go to Settings above, paste your Anthropic API key, and click Save key.</div>";
+    return "error";
+  }
+
+  if (resultEl) resultEl.innerHTML = "<span class=\"thinking\">Thinking...</span>";
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: buildCaseMessage(t) }]
+      })
+    });
+
+    if (!response.ok) {
+      let bodyText = "";
+      try { bodyText = await response.text(); } catch (readErr) { bodyText = ""; }
+      let message;
+      if (response.status === 401) {
+        message = "Error: the API key was rejected (401 Unauthorized). Check the key you saved in Settings.";
+      } else if (response.status === 429) {
+        message = "Error: rate limited or out of credit (429 Too Many Requests). Check your Anthropic account balance and try again.";
+      } else {
+        message = "Error " + response.status + " from the API: " + bodyText;
+      }
+      if (resultEl) resultEl.innerHTML = "<div class=\"error-note\">" + escapeHtml(message) + "</div>";
+      return "error";
+    }
+
+    const data = await response.json();
+    const text = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : JSON.stringify(data);
+    const parsed = parseAgentOutput(text);
+    if (parsed) {
+      CASE_RESULTS[transactionId] = parsed;
+      if (resultEl) resultEl.innerHTML = renderParsedOutput(parsed, transactionId);
+      const decision = (parsed.RECOMMENDED_DECISION || "").toLowerCase();
+      return decision.indexOf("escalate") !== -1 ? "escalate" : "ok";
+    } else {
+      CASE_RESULTS[transactionId] = { RECOMMENDED_DECISION: "(unparsed output)" };
+      if (resultEl) resultEl.innerHTML = "<span class=\"badge warn\">UNPARSED</span>" +
+        "<p class=\"boundary-note\">Agent output did not match the expected format. Showing raw text below.</p>" +
+        "<pre style=\"white-space: pre-wrap; background: var(--bg-inset); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); padding: var(--sp-3); font-family: var(--font-mono); font-size: var(--fs-0); color: var(--ink-2);\">" +
+        escapeHtml(text) + "</pre>" +
+        renderGate(transactionId);
+      return "error";
+    }
+  } catch (err) {
+    if (resultEl) resultEl.innerHTML = "<div class=\"error-note\">Error: could not reach the Anthropic API. Check your internet connection. (" + escapeHtml(err.message) + ")</div>";
+    return "error";
+  }
+}
+
+async function runCase(transactionId) {
+  await runCaseCore(transactionId);
+  renderCaseList();
+}
+
+async function runAll() {
+  let okCount = 0, escalateCount = 0, errorCount = 0;
+  runAllSummaryHtml = "";
+
+  for (let i = 0; i < TRANSACTIONS.length; i++) {
+    const t = TRANSACTIONS[i];
+    /* selectCase() and renderCaseList() rebuild the whole left panel, so progress text is
+       kept in runAllProgressText (rendered by renderCaseList) rather than in cached elements. */
+    runAllProgressText = "Running " + (i + 1) + " of " + TRANSACTIONS.length + ": " + t.id + "...";
+    selectCase(t.id);
+
+    const outcome = await runCaseCore(t.id);
+    if (outcome === "ok") okCount++;
+    else if (outcome === "escalate") escalateCount++;
+    else errorCount++;
+    renderCaseList();
+  }
+
+  runAllProgressText = "Done - ran all " + TRANSACTIONS.length + " cases.";
+  runAllSummaryHtml = "<p><strong>Run All summary:</strong> " + okCount + " OK, " + escalateCount +
+    " REFUSED-ESCALATE, " + errorCount + " errors (out of " + TRANSACTIONS.length + " total).</p>";
+  renderCaseList();
+}
+
+/* ---------- Settings: API key lives only in localStorage, never in this file ---------- */
+
+function updateKeyStatus() {
+  const status = document.getElementById("keyStatus");
+  const saved = localStorage.getItem(API_KEY_STORAGE_KEY);
+  status.textContent = saved ? "Key saved." : "No key saved yet. Paste your Anthropic API key above.";
+}
+
+document.getElementById("saveKeyBtn").addEventListener("click", function () {
+  const input = document.getElementById("apiKeyInput");
+  const value = input.value.trim();
+  if (value) {
+    localStorage.setItem(API_KEY_STORAGE_KEY, value);
+    input.value = "";
+  }
+  updateKeyStatus();
+});
+
+document.getElementById("clearKeyBtn").addEventListener("click", function () {
+  localStorage.removeItem(API_KEY_STORAGE_KEY);
+  updateKeyStatus();
+});
+
+/* ---------- Initial render: run first so the page shows data even if Settings/localStorage misbehaves ---------- */
+
+renderCaseList();
+renderMainPanel();
+renderRunLog();
+updateKeyStatus();
+showView("console");
+</script>
+</body>
+</html>

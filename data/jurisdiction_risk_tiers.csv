@@ -1,0 +1,8 @@
+jurisdiction,risk_tier,notes
+UAE,Clear,Corridor home jurisdiction. Standard due diligence applies.
+India,Clear,Corridor home jurisdiction. Standard due diligence applies.
+United Kingdom,Clear,Corridor home jurisdiction. Standard due diligence applies.
+Singapore,Clear,Common regional financial center. Standard due diligence applies.
+Region A,Grey,Fictional FATF-style increased-monitoring jurisdiction. Strategic AML deficiencies being addressed under an action plan.
+Region B,Grey,Fictional FATF-style increased-monitoring jurisdiction. Strategic deficiencies in beneficial-ownership transparency.
+Region C,Black,Fictional FATF-style call-for-action jurisdiction. High-risk; enhanced due diligence required on any exposure.
