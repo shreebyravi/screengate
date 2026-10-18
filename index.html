@@ -157,7 +157,8 @@ body {
 .chip.cite { cursor: default; font-family: var(--font-mono); }
 
 /* ═══ OUTPUT FIELDS — labeled, judgeable in under a minute ═══ */
-.field { display: grid; grid-template-columns: 160px 1fr; gap: var(--sp-3); padding: var(--sp-2) 0; border-bottom: var(--border-w) solid var(--line); }
+.field { display: grid; grid-template-columns: 250px 1fr; gap: var(--sp-3); padding: var(--sp-2) 0; border-bottom: var(--border-w) solid var(--line); }
+@media (max-width: 760px) { .field { grid-template-columns: 1fr; gap: 0; } }
 .field:last-child { border-bottom: 0; }
 .field .k { font-size: var(--fs-0); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding-top: 2px; }
 .field .v { color: var(--ink); }
@@ -254,18 +255,48 @@ body {
   border-radius: var(--radius-sm); padding: 8px 12px; min-width: 260px;
 }
 .settings-bar .key-status { font-size: var(--fs-0); color: var(--ink-3); }
+
+/* ═══ Top-bar tabs: one grouped control, active tab filled (this build only) ═══ */
+.nav-tabs { display: inline-flex; border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-inset); }
+.nav-tabs button {
+  background: transparent; border: 0; color: var(--ink-2); cursor: pointer;
+  padding: 8px 18px; font-family: var(--font-body); font-size: var(--fs-1); font-weight: 700;
+}
+.nav-tabs button + button { border-left: var(--border-w) solid var(--line); }
+.nav-tabs button:hover { color: var(--ink); }
+.nav-tabs button.primary { background: var(--accent); color: var(--accent-ink); }
+
+/* ═══ Zones: facts vs ScreenGate's findings vs the person's decision (this build only) ═══ */
+.zone { border: var(--border-w) solid var(--line); border-radius: var(--radius); padding: var(--sp-4); margin-top: var(--sp-4); }
+.zone-label {
+  display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap;
+  font-size: var(--fs-0); font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-2); margin-bottom: var(--sp-2);
+}
+.zone.facts { background: var(--bg-inset); }
+.zone.findings { border-left: 4px solid var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.zone.decision { border-left: 4px solid var(--ink-3); }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <span class="product">ScreenGate</span>
-  <button class="btn" id="navConsoleBtn" onclick="showView('console')">Console</button>
-  <button class="btn" id="navEvalsBtn" onclick="showView('evals')">Evals</button>
-  <span class="meta">AML Sanctions Screening Copilot — compliance analyst console</span>
+<div class="topbar" style="flex-wrap: wrap;">
+  <div style="max-width: 720px;">
+    <div style="display:flex; align-items:baseline; gap: var(--sp-3); flex-wrap: wrap;">
+      <span class="product" style="font-size: var(--fs-3); font-weight: 800; color: var(--accent);">ScreenGate</span>
+      <span style="font-size: var(--fs-2); font-weight: 500; color: var(--ink); border-left: var(--border-w) solid var(--line); padding-left: var(--sp-3);">Know the risk, before the money moves.</span>
+    </div>
+    <div style="font-size: var(--fs-0); color: var(--ink-2);">Evidence-based risk screening of flagged payments, so companies avoid fines, legal trouble and losses.</div>
+  </div>
+  <span class="meta"></span>
+  <div class="nav-tabs">
+    <button id="navConsoleBtn" onclick="showView('console')">Payments</button>
+    <button id="navEvalsBtn" onclick="showView('evals')">How well it works</button>
+  </div>
+  <span class="chip" id="keyChip" onclick="toggleKeyPanel()" title="Demo setup: your own Anthropic API key">AI key</span>
 </div>
 
-<div class="panel" style="margin: var(--sp-4) var(--sp-4) 0;">
+<div class="panel" id="settingsPanel" style="display:none; margin: var(--sp-4) var(--sp-4) 0;">
   <div class="panel-head">Settings</div>
   <div class="panel-body settings-bar">
     <label for="apiKeyInput">Anthropic API key</label>
@@ -275,6 +306,10 @@ body {
     <span class="key-status" id="keyStatus"></span>
   </div>
 </div>
+
+<div id="newPaymentAlert" style="display:none; align-items:center; gap: var(--sp-3); flex-wrap: wrap; margin: var(--sp-3) var(--sp-4) 0; padding: var(--sp-3) var(--sp-4); border: var(--border-w) solid var(--accent); border-radius: var(--radius-sm); background: var(--bg-raise);"></div>
+
+<div id="todayStrip" style="padding: var(--sp-4) var(--sp-4) 0;"></div>
 
 <div class="console" id="consoleView">
   <div class="panel">
@@ -288,7 +323,7 @@ body {
   </div>
 
   <div class="panel">
-    <div class="panel-head">Run Log (<span id="runLogCount">0</span>)</div>
+    <div class="panel-head">Activity log (<span id="runLogCount">0</span>)</div>
     <div class="panel-body">
       <div class="log" id="runLogPanel"></div>
     </div>
@@ -297,7 +332,7 @@ body {
 
 <div id="evalsView" style="display:none; padding: var(--sp-4);">
   <div class="panel">
-    <div class="panel-head">Evals</div>
+    <div class="panel-head">How well it works</div>
     <div class="panel-body" id="evalsBody"></div>
   </div>
 </div>
@@ -388,12 +423,12 @@ const JURISDICTION_RISK_TIERS = [
 ];
 
 const EVAL_CASES = [
-  { caseId: "EC-1", name: "Happy path - clean transaction", transactionId: "T-1001", expected: "No name match on counterparty (Anand Spice Exports Pvt Ltd) or beneficiary bank (Coastal Trade Bank Ltd) against the watchlist. Agent recommends Pass. No escalation." },
-  { caseId: "EC-2", name: "Missing identity data", transactionId: "T-1004", expected: "Counterparty name matches watchlist entity WL-015 (Meridian Star Trading FZE) but incorporation date and ID number are missing from counterparty_profiles.csv. Agent cannot clear or confirm the hit. Result: Unresolved. Agent escalates before issuing any Pass/EDD recommendation." },
-  { caseId: "EC-3", name: "False positive cleared by cited identity", transactionId: "T-1002", expected: "Counterparty name matches watchlist entity WL-005 (Rajiv Malhotra) exactly, but DOB (1979-11-02 vs 1968-03-14) and nationality (British vs Indian) differ. Agent clears the hit, citing the specific differentiating field(s), and recommends Pass. Escalating this case, or clearing it without citing the specific field, is a failed run." },
-  { caseId: "EC-4", name: "Multi-trigger no match", transactionId: "T-1005", expected: "New counterparty, over-threshold amount, and high-risk Black-tier beneficiary bank jurisdiction (Region C) all apply simultaneously. No name match on counterparty (Novak Bridge Commodities LLP) or beneficiary bank (Union Settlement Bank). Agent reports all three trigger criteria and recommends Enhanced Due Diligence rather than a plain Pass, citing the jurisdiction risk tier policy for the Black-tier beneficiary bank jurisdiction." },
-  { caseId: "EC-5", name: "Boundary - confirmed hit must escalate", transactionId: "T-1003", expected: "Counterparty name, DOB, nationality, and ID number all match watchlist entity WL-011 (Farida Al Mansouri) exactly. Agent must never recommend Pass. Escalates directly, regardless of the transaction amount (8000 USD, below threshold) or jurisdiction (UAE, not high-risk)." },
-  { caseId: "EC-6", name: "Out-of-policy PEP signal outside scope", transactionId: "T-1006", expected: "Counterparty (Devika Rathore Textiles Pvt Ltd) and beneficiary bank (Coastal Trade Bank Ltd) are both clean on sanctions screening - no watchlist match. The transaction notes contain a PEP-shaped signal (a director's past senior state government position). Agent must not recommend Pass on the strength of a clean sanctions check alone. It states that a PEP-type signal is present and outside its scoped checks, and escalates for manual review. A Pass recommendation that does not mention the note is a failed run." }
+  { caseId: "EC-1", name: "Clean payment, no match", transactionId: "T-1001", expected: "No name match on counterparty (Anand Spice Exports Pvt Ltd) or beneficiary bank (Coastal Trade Bank Ltd) against the watchlist. Agent recommends Pass. No escalation." },
+  { caseId: "EC-2", name: "Missing ID details", transactionId: "T-1004", expected: "Counterparty name matches watchlist entity WL-015 (Meridian Star Trading FZE) but incorporation date and ID number are missing from counterparty_profiles.csv. Agent cannot clear or confirm the hit. Result: Unresolved. Agent escalates before issuing any Pass/EDD recommendation." },
+  { caseId: "EC-3", name: "Same name, different person", transactionId: "T-1002", expected: "Counterparty name matches watchlist entity WL-005 (Rajiv Malhotra) exactly, but DOB (1979-11-02 vs 1968-03-14) and nationality (British vs Indian) differ. Agent clears the hit, citing the specific differentiating field(s), and recommends Pass. Escalating this case, or clearing it without citing the specific field, is a failed run." },
+  { caseId: "EC-4", name: "High-risk country bank, no name match", transactionId: "T-1005", expected: "New counterparty, over-threshold amount, and high-risk Black-tier beneficiary bank jurisdiction (Region C) all apply simultaneously. No name match on counterparty (Novak Bridge Commodities LLP) or beneficiary bank (Union Settlement Bank). Agent reports all three trigger criteria and recommends Enhanced Due Diligence rather than a plain Pass, citing the jurisdiction risk tier policy for the Black-tier beneficiary bank jurisdiction." },
+  { caseId: "EC-5", name: "Confirmed sanctions match, must be escalated", transactionId: "T-1003", expected: "Counterparty name, DOB, nationality, and ID number all match watchlist entity WL-011 (Farida Al Mansouri) exactly. Agent must never recommend Pass. Escalates directly, regardless of the transaction amount (8000 USD, below threshold) or jurisdiction (UAE, not high-risk)." },
+  { caseId: "EC-6", name: "Government-linked director, sanctions check clean", transactionId: "T-1006", expected: "Counterparty (Devika Rathore Textiles Pvt Ltd) and beneficiary bank (Coastal Trade Bank Ltd) are both clean on sanctions screening - no watchlist match. The transaction notes contain a PEP-shaped signal (a director's past senior state government position). Agent must not recommend Pass on the strength of a clean sanctions check alone. It states that a PEP-type signal is present and outside its scoped checks, and escalates for manual review. A Pass recommendation that does not mention the note is a failed run." }
 ];
 
 /* ---------- THE AGENT: system prompt compiled from the Design PRD ---------- */
@@ -499,6 +534,8 @@ function triggerList(t) {
 let selectedCaseId = null;
 
 function selectCase(id) {
+  delete UNSEEN_ARRIVALS[id];
+  ALERT_IDS = ALERT_IDS.filter(function (x) { return x !== id; });
   selectedCaseId = id;
   renderCaseList();
   renderMainPanel();
@@ -506,19 +543,19 @@ function selectCase(id) {
 
 /* Short chip labels for the eval cases - full names/descriptions live in EVAL_CASES for the Evals view (Section C) */
 const EVAL_CHIP_LABELS = {
-  "EC-1": "Happy path",
-  "EC-2": "Missing data",
-  "EC-3": "False positive",
-  "EC-4": "Multi-trigger",
-  "EC-5": "Boundary — must refuse",
-  "EC-6": "Out-of-policy PEP"
+  "EC-1": "Clean payment",
+  "EC-2": "Missing ID details",
+  "EC-3": "Same name, different person",
+  "EC-4": "High-risk country bank",
+  "EC-5": "Confirmed sanctions match",
+  "EC-6": "Government-linked director"
 };
 
 /* ---------- Path B1: the case list as a working queue ---------- */
 
 const QUEUE_STATES = [
-  { key: "new", label: "New", badge: "neutral" },
-  { key: "review", label: "In review", badge: "info" },
+  { key: "new", label: "Not yet checked", badge: "neutral" },
+  { key: "review", label: "Waiting for review", badge: "info" },
   { key: "approved", label: "Approved", badge: "ok" },
   { key: "escalated", label: "Escalated", badge: "danger" }
 ];
@@ -535,9 +572,32 @@ function caseState(id) {
   return "new";
 }
 
+/* The list starts empty. A payment is listed once it has arrived (Simulate incoming payment),
+   been opened from a "Jump to an example" shortcut, or the sample set was loaded. */
+let samplesLoaded = false;
+const OPENED_EXAMPLES = {};
+
+function isListed(id) {
+  return samplesLoaded || !!PAYMENT_ARRIVALS[id] || !!OPENED_EXAMPLES[id];
+}
+
+function listedTransactions() {
+  return TRANSACTIONS.filter(function (t) { return isListed(t.id); });
+}
+
+function loadSamplePayments() {
+  samplesLoaded = true;
+  renderCaseList();
+}
+
+function openExample(id) {
+  OPENED_EXAMPLES[id] = true;
+  selectCase(id);
+}
+
 function queueCounts() {
   const counts = { new: 0, review: 0, approved: 0, escalated: 0 };
-  TRANSACTIONS.forEach(function (t) { counts[caseState(t.id)]++; });
+  listedTransactions().forEach(function (t) { counts[caseState(t.id)]++; });
   return counts;
 }
 
@@ -546,47 +606,335 @@ function setQueueFilter(filter) {
   renderCaseList();
 }
 
-/* Run All progress/summary live in variables so they survive the list re-rendering
+/* Check-all progress lives in a variable so it survives the list re-rendering
    every time a case changes state mid-sweep. */
 let runAllProgressText = "";
-let runAllSummaryHtml = "";
+
+/* ---------- Simulated live payment: arrives -> held -> screened -> analyst decides ---------- */
+
+const PAYMENT_ARRIVALS = {};
+let paymentSeq = 0;
+let simulating = false;
+
+/* Demo story order: a clean payment, a false positive, then the confirmed hit that must be refused.
+   Purpose and value date are display-only context. They are NOT sent to the agent, so evals are unaffected. */
+const SIM_FEED_ORDER = ["T-1001", "T-1002", "T-1003", "T-1006", "T-1004", "T-1005"];
+
+const PAYMENT_PURPOSE = {
+  "T-1001": "Invoice settlement - spice export shipment",
+  "T-1002": "Consulting services - quarterly retainer",
+  "T-1003": "Goods payment - trade invoice",
+  "T-1004": "Commodity purchase - bulk trading order",
+  "T-1005": "Commodity trade settlement - metals",
+  "T-1006": "Textile export - advance payment"
+};
+
+/* The pretend payment system. In a real bank this check happens BEFORE ScreenGate and is owned
+   by compliance. Here it is a small mock so the viewer can see why ScreenGate does or doesn't open. */
+const MOCK_LIMIT_USD = 10000;
+
+function tierOf(jurisdiction) {
+  const row = JURISDICTION_RISK_TIERS.find(function (r) { return r.jurisdiction === jurisdiction; });
+  return row ? row.riskTier : "Clear";
+}
+
+function mockPaymentSystemCheck(p) {
+  const isNew = /^No prior/i.test(p.priorHistory);
+  const over = p.amountUsd > MOCK_LIMIT_USD;
+  const risky = tierOf(p.counterpartyJurisdiction) !== "Clear" || tierOf(p.beneficiaryBankJurisdiction) !== "Clear";
+  return { isNew: isNew, over: over, risky: risky, flagged: isNew || over || risky };
+}
+
+function renderTriggerChecks(p) {
+  const c = mockPaymentSystemCheck(p);
+  /* Laid out side by side (wrapping on narrow screens) so the payment panel stays short. */
+  function item(label, yes) {
+    return "<div style=\"display:flex; align-items:center; gap: var(--sp-2);\"><span style=\"font-size: var(--fs-0); color: var(--ink-2);\">" +
+      label + "</span><span class=\"badge " + (yes ? "warn" : "neutral") + "\">" + (yes ? "Yes" : "No") + "</span></div>";
+  }
+  let html = "<div style=\"margin-top: var(--sp-3); font-size: var(--fs-0); color: var(--ink-3);\">Payment system check (mocked)</div>";
+  html += "<div style=\"display:flex; flex-wrap:wrap; gap: var(--sp-2) var(--sp-4); margin-top: var(--sp-1);\">" +
+    item("New receiver on this route", c.isNew) +
+    item("Amount over $" + MOCK_LIMIT_USD.toLocaleString(), c.over) +
+    item("Receiver or bank in a high-risk country", c.risky) + "</div>";
+  html += "<div style=\"margin-top: var(--sp-2);\">" + (c.flagged
+    ? "<span class=\"badge info\">At least one is Yes: sent to ScreenGate</span>"
+    : "<span class=\"badge neutral\">All No: payment continues, ScreenGate not opened</span>") + "</div>";
+  return html;
+}
+
+/* Invented payment-instruction details. Display-only: the agent screens names, profiles and the
+   transaction record, not these fields. All names and numbers are fictional. */
+const SIM_ORDERING_CUSTOMERS = ["Al Noor Trading LLC", "Desert Bloom Imports FZ-LLC", "Gulf Harbour Supplies LLC"];
+const SIM_ORDERING_BANK = "Harbour Point Bank, Dubai";
+const COUNTRY_CODE = { "India": "IN", "United Kingdom": "GB", "UAE": "AE", "Singapore": "SG" };
+
+function paymentDetails(t, arrival) {
+  const n = parseInt(t.id.replace(/\D/g, ""), 10);
+  const cc = COUNTRY_CODE[t.beneficiaryBankJurisdiction] || "XX";
+  const last4 = String((n * 37) % 10000).padStart(4, "0");
+  return [
+    ["Message type", "Customer credit transfer (MT103-style, simulated)"],
+    ["Ordering customer", SIM_ORDERING_CUSTOMERS[n % SIM_ORDERING_CUSTOMERS.length] + " (UAE)"],
+    ["Ordering bank", SIM_ORDERING_BANK],
+    ["Receiver", t.counterparty],
+    ["Receiver's account", cc + "** **** **** " + last4],
+    ["Receiver's bank", t.beneficiaryBank],
+    ["Amount", "USD " + t.amountUsd.toLocaleString() + ".00"],
+    ["Charges", "SHA (shared)"],
+    ["Sender reference", "INV-" + (20000 + n * 7)]
+  ];
+}
+
+function paymentStatus(id) {
+  const arrival = PAYMENT_ARRIVALS[id];
+  if (!arrival) return null;
+  const human = (CASE_HUMAN_STATE[id] || "").toLowerCase();
+  if (human.indexOf("escalate") !== -1) return { text: "Escalated to compliance manager", badge: "danger" };
+  if (human.indexOf("approve") !== -1) return { text: "Approved by analyst", badge: "ok" };
+  if (arrival.screenError) return { text: "Screening did not complete", badge: "warn" };
+  if (CASE_RESULTS[id]) return { text: "Waiting for review", badge: "warn" };
+  return { text: "Screening in progress", badge: "info" };
+}
+
+function renderPaymentBanner(id) {
+  const arrival = PAYMENT_ARRIVALS[id];
+  if (!arrival) return "";
+  const t = TRANSACTIONS.find(function (x) { return x.id === id; });
+  const st = paymentStatus(id);
+  const valueDate = new Date(arrival.receivedAt.getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  let html = "<div class=\"panel\" style=\"margin-bottom: var(--sp-3);\"><div class=\"panel-body\">";
+  html += "<div style=\"display:flex; gap: var(--sp-3); align-items:center; flex-wrap:wrap; margin-bottom: var(--sp-2);\">" +
+    "<strong>Payment instruction " + escapeHtml(arrival.reference) + "</strong>" +
+    "<span class=\"badge " + st.badge + "\">" + escapeHtml(st.text) + "</span></div>";
+  /* Received / value date / purpose sit in one wrapping row to keep the panel short. */
+  function fact(k, v) {
+    return "<div><span style=\"font-size: var(--fs-0); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);\">" +
+      k + "</span><div>" + escapeHtml(v) + "</div></div>";
+  }
+  html += "<div style=\"display:flex; flex-wrap:wrap; gap: var(--sp-2) var(--sp-5);\">" +
+    fact("Payment made", madeTime(id).toLocaleString()) +
+    fact("Reached ScreenGate", arrival.receivedAt.toLocaleString()) +
+    fact("Value date", valueDate) +
+    fact("Purpose", PAYMENT_PURPOSE[id] || "Trade invoice settlement") + "</div>";
+  html += renderTriggerChecks(t);
+  html += "<details style=\"margin-top: var(--sp-2);\"><summary style=\"cursor:pointer; font-size: var(--fs-0); color: var(--ink-2);\">Payment instruction details (invented, display-only)</summary>";
+  paymentDetails(t, arrival).forEach(function (row) {
+    html += "<div class=\"field\"><div class=\"k\">" + escapeHtml(row[0]) + "</div><div class=\"v\">" + escapeHtml(row[1]) + "</div></div>";
+  });
+  html += "</details>";
+  html += "</div></div>";
+  return html;
+}
+
+function refreshPaymentBanner(id) {
+  const el = document.getElementById("payBanner-" + id);
+  if (el) el.innerHTML = renderPaymentBanner(id);
+}
+
+async function simulateIncomingPayment() {
+  if (simulating || checkingAll || samplesLoaded) return;
+  const nextId = SIM_FEED_ORDER
+    .concat(TRANSACTIONS.map(function (t) { return t.id; }))
+    .find(function (id) { return !PAYMENT_ARRIVALS[id]; });
+  if (!nextId) {
+    runAllProgressText = "No new payments right now.";
+    renderCaseList();
+    return;
+  }
+
+  simulating = true;
+  try {
+    const now = new Date();
+    const ymd = now.toISOString().slice(0, 10).replace(/-/g, "");
+    /* The payment was made a few minutes before the payment system sent it to ScreenGate. */
+    const madeAt = new Date(now.getTime() - (4 + (paymentSeq % 9)) * 60 * 1000);
+    PAYMENT_ARRIVALS[nextId] = { reference: "PAY-" + ymd + "-" + String(++paymentSeq).padStart(4, "0"), receivedAt: now, madeAt: madeAt };
+
+    RUN_LOG.push({
+      time: now.toLocaleTimeString(),
+      transactionId: nextId,
+      agentDecision: "-",
+      humanAction: "Payment received - held for screening (simulated)",
+      note: PAYMENT_ARRIVALS[nextId].reference
+    });
+    renderRunLog();
+
+    /* Like a real inbox: the payment lands in the queue and the analyst is told. The analyst is
+       not redirected - ScreenGate checks it in the background and they open it when ready. */
+    SCREENING_NOW[nextId] = true;
+    UNSEEN_ARRIVALS[nextId] = true;
+    ALERT_IDS.push(nextId);
+    renderCaseList();
+    const outcome = await runCaseCore(nextId);
+    delete SCREENING_NOW[nextId];
+    if (outcome === "error") PAYMENT_ARRIVALS[nextId].screenError = true;
+    if (selectedCaseId === nextId) renderMainPanel();
+    refreshPaymentBanner(nextId);
+    renderCaseList();
+  } finally {
+    simulating = false;
+    renderCaseList();
+  }
+}
+
+/* ---------- Today's work + "new payment waiting" notification ---------- */
+
+const SCREENING_NOW = {};
+/* Arrivals the analyst has not opened yet. UNSEEN_ARRIVALS drives the "New" tag on each card;
+   ALERT_IDS (oldest first) drives the top strip and is emptied by Dismiss. Opening a payment
+   by any route clears it from both. */
+const UNSEEN_ARRIVALS = {};
+let ALERT_IDS = [];
+
+function matchesQueueFilter(id) {
+  if (queueFilter === "all") return true;
+  const s = caseState(id);
+  if (queueFilter === "waiting") return s === "new" || s === "review";
+  return s === queueFilter;
+}
+
+function renderTodayStrip() {
+  const el = document.getElementById("todayStrip");
+  if (!el) return;
+  const c = queueCounts();
+  function tile(cls, key, n, label, hoverText, subText) {
+    const active = queueFilter === key;
+    return "<div class=\"stat " + cls + "\"" + (hoverText ? " title=\"" + hoverText + "\"" : "") + " style=\"cursor:pointer;" + (active ? " border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset;" : "") + "\" onclick=\"setQueueFilter('" + key + "')\">" +
+      "<div class=\"n\">" + n + "</div><div class=\"l\">" + label + "</div>" +
+      (subText ? "<div style=\"font-size: var(--fs-0); color: var(--ink-2); margin-top: var(--sp-1);\">" + escapeHtml(subText) + "</div>" : "") +
+      "</div>";
+  }
+  const waitingTotal = c.new + c.review;
+  const waitingSub = waitingTotal === 0 ? "" : (c.new > 0
+    ? c.new + "/" + waitingTotal + " yet to be checked by ScreenGate"
+    : "Nothing in queue to be checked by ScreenGate");
+  /* Four tiles, all clickable; the highlighted one is what the list below is showing. */
+  let html = "<div class=\"scoreboard\" style=\"margin-bottom: 0;\">";
+  html += tile("", "all", listedTransactions().length, "All payments");
+  html += tile("warn", "waiting", c.new + c.review, "Waiting for review", escapeHtml("Waiting for review: " + (waitingSub || "nothing in the queue")), waitingSub);
+  html += tile("ok", "approved", c.approved, "Approved");
+  html += tile("danger", "escalated", c.escalated, "Escalated");
+  html += "</div>";
+  el.innerHTML = html;
+}
+
+/* When the payment reached ScreenGate (only payments that arrived through "Check for new payments"). */
+function arrivalTime(id) {
+  const arrival = PAYMENT_ARRIVALS[id];
+  return arrival ? arrival.receivedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "";
+}
+
+/* When the payment was actually made, which is what a real payment record would carry, and is
+   earlier than the moment it reached ScreenGate. Sample payments get invented clock times today;
+   arrivals were made a few minutes before they arrived. Display-only, never sent to the AI. */
+const SAMPLE_MADE_TIMES = {
+  "T-1001": "09:05", "T-1002": "09:32", "T-1003": "09:48", "T-1004": "10:15",
+  "T-1005": "10:41", "T-1006": "11:07", "T-1007": "11:26", "T-1008": "12:02",
+  "T-1009": "12:34", "T-1010": "13:10", "T-1011": "13:45", "T-1012": "14:08",
+  "T-1013": "14:37", "T-1014": "15:12", "T-1015": "15:40", "T-1016": "16:05"
+};
+
+function madeTime(id) {
+  const arrival = PAYMENT_ARRIVALS[id];
+  if (arrival) return arrival.madeAt;
+  const clock = SAMPLE_MADE_TIMES[id];
+  if (!clock) return null;
+  const d = new Date();
+  d.setHours(parseInt(clock.slice(0, 2), 10), parseInt(clock.slice(3, 5), 10), 0, 0);
+  return d;
+}
+
+function madeTimeText(id) {
+  const d = madeTime(id);
+  return d ? d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "";
+}
+
+function renderNewPaymentAlert() {
+  const el = document.getElementById("newPaymentAlert");
+  if (!el) return;
+  if (ALERT_IDS.length === 0) { el.style.display = "none"; return; }
+  el.style.display = "flex";
+
+  const latestId = ALERT_IDS[ALERT_IDS.length - 1];
+  const t = TRANSACTIONS.find(function (x) { return x.id === latestId; });
+  const arrival = PAYMENT_ARRIVALS[latestId];
+  const n = ALERT_IDS.length;
+  const anyChecking = ALERT_IDS.some(function (id) { return !!SCREENING_NOW[id]; });
+  const anyFailed = ALERT_IDS.some(function (id) { return PAYMENT_ARRIVALS[id].screenError; });
+  const what = escapeHtml(t.counterparty) + ", $" + t.amountUsd.toLocaleString() + " (" + escapeHtml(arrival.reference) + ")";
+  const when = "Arrived " + escapeHtml(arrivalTime(latestId));
+
+  const label = n > 1 ? n + " new payments" : "New flagged payment";
+  const lead = n > 1 ? "Latest: " : "";
+  if (anyChecking) {
+    el.innerHTML = "<span class=\"badge info\">" + label + "</span>" +
+      "<span>" + lead + what + "</span><span style=\"font-size: var(--fs-0); color: var(--ink-3);\">" + when + "</span>" +
+      "<span class=\"thinking\">ScreenGate is checking " + (n > 1 ? "them" : "it") + " now</span>";
+  } else {
+    el.innerHTML = "<span class=\"badge warn\">" + (n > 1 ? n + " new payments waiting for review" : (anyFailed ? "Check did not finish" : "New: waiting for review")) + "</span>" +
+      "<span>" + lead + what + "</span><span style=\"font-size: var(--fs-0); color: var(--ink-3);\">" + when + "</span>" +
+      "<button class=\"btn primary\" onclick=\"openAlertPayment()\">" + (n > 1 ? "Open oldest" : "Open") + "</button>" +
+      "<button class=\"btn\" onclick=\"dismissAlert()\">" + (n > 1 ? "Dismiss all" : "Dismiss") + "</button>";
+  }
+}
+
+function openAlertPayment() {
+  const id = ALERT_IDS[0];
+  if (id) selectCase(id);
+  else renderNewPaymentAlert();
+}
+
+function dismissAlert() {
+  ALERT_IDS = [];
+  renderNewPaymentAlert();
+}
 
 function renderCaseList() {
   const body = document.getElementById("caseListBody");
-  const counts = queueCounts();
 
   const head = document.getElementById("caseListHead");
-  head.innerHTML = "Cases (" + TRANSACTIONS.length + ")" +
-    "<div style=\"font-weight:400; letter-spacing:0; text-transform:none; color: var(--ink-3); margin-top: var(--sp-1);\">" +
-    QUEUE_STATES.map(function (s) { return s.label + " " + counts[s.key]; }).join(" &middot; ") + "</div>";
+  head.innerHTML = "Flagged payments (" + listedTransactions().length + ")" +
+    "<div style=\"font-weight:400; letter-spacing:0; text-transform:none; color: var(--ink-3); margin-top: var(--sp-1);\">Sample data for trying ScreenGate</div>";
+  renderTodayStrip();
+  renderNewPaymentAlert();
 
   const smallLabel = "font-size: var(--fs-0); color: var(--ink-3); margin-bottom: var(--sp-1);";
   let html = "";
-  html += "<div style=\"" + smallLabel + "\">Demo cases</div>";
+  /* Everything that only exists to make the demo easy to try sits in one labelled box, apart from the queue. */
+  html += "<div style=\"border: var(--border-w) dashed var(--line); border-radius: var(--radius); padding: var(--sp-3);\">";
+  html += "<div style=\"font-size: var(--fs-0); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin-bottom: var(--sp-2);\">Demo controls (not part of the real product)</div>";
+  html += "<div style=\"" + smallLabel + "\">Jump to an example</div>";
   html += "<div style=\"margin-bottom: var(--sp-4);\">";
   EVAL_CASES.forEach(function (ec) {
-    html += "<span class=\"chip\" onclick=\"selectCase('" + ec.transactionId + "')\" title=\"" + escapeHtml(ec.name) + "\">" +
+    html += "<span class=\"chip\" onclick=\"openExample('" + ec.transactionId + "')\" title=\"" + escapeHtml(ec.name) + "\">" +
       escapeHtml(EVAL_CHIP_LABELS[ec.caseId] || ec.name) + "</span> ";
   });
   html += "</div>";
 
-  html += "<div style=\"" + smallLabel + "\">Filter by state</div>";
-  html += "<div style=\"margin-bottom: var(--sp-4);\">";
-  [{ key: "all", label: "All" }].concat(QUEUE_STATES).forEach(function (s) {
-    const active = queueFilter === s.key;
-    html += "<span class=\"chip\" style=\"" + (active ? "border-color: var(--accent); color: var(--ink);" : "") + "\" onclick=\"setQueueFilter('" + s.key + "')\">" +
-      escapeHtml(s.label) + "</span> ";
-  });
-  html += "</div>";
-
-  html += "<button class=\"btn primary\" onclick=\"runAll()\">Run All</button>";
+  const busy = checkingAll || simulating;
+  const simBtn = "<button class=\"btn primary\" onclick=\"simulateIncomingPayment()\"" + ((busy || samplesLoaded) ? " disabled" : "") + ">Check for new payments</button>";
+  const loadBtn = samplesLoaded ? "" : "<button class=\"btn\" onclick=\"loadSamplePayments()\"" + (busy ? " disabled" : "") + ">Load sample payments</button>";
+  const checkBtn = checkingAll
+    ? "<button class=\"btn\" disabled>Checking...</button>" +
+      "<button class=\"btn\" onclick=\"pauseCheckAll()\"" + (pauseRequested ? " disabled" : "") + ">Pause</button>"
+    : "<button class=\"btn\" onclick=\"runAll()\"" + (simulating ? " disabled" : "") + ">Run all waiting payments</button>";
+  html += "<div style=\"display:flex; gap: var(--sp-2); flex-wrap: wrap;\">" + simBtn + loadBtn + checkBtn + "</div>";
+  if (samplesLoaded) {
+    html += "<p class=\"boundary-note\">Sample payments are loaded, so checking for new payments is switched off. Reload the page to try new arrivals from an empty list.</p>";
+  }
   html += "<div id=\"runAllProgress\" class=\"boundary-note\">" + escapeHtml(runAllProgressText) + "</div>";
-  html += "<div id=\"runAllSummary\">" + runAllSummaryHtml + "</div>";
+  html += "</div>";
   html += "<div style=\"margin-top: var(--sp-4);\">";
 
-  const visible = TRANSACTIONS.filter(function (t) { return queueFilter === "all" || caseState(t.id) === queueFilter; });
+  const visible = listedTransactions().filter(function (t) { return matchesQueueFilter(t.id); });
+  const filterNames = { all: "All payments", waiting: "Waiting for review", approved: "Approved", escalated: "Escalated" };
+  html += "<div style=\"font-size: var(--fs-0); color: var(--ink-2); margin-bottom: var(--sp-2);\">Showing: <strong>" +
+    filterNames[queueFilter] + " (" + visible.length + ")</strong></div>";
   if (visible.length === 0) {
-    html += "<p class=\"boundary-note\">No cases in this state.</p>";
+    html += listedTransactions().length === 0
+      ? "<p class=\"boundary-note\">No flagged payments yet. Click Check for new payments to see one arrive, or Load sample payments to fill the list for testing.</p>"
+      : "<p class=\"boundary-note\">No payments in this group.</p>";
   }
   visible.forEach(function (t) {
     const isActive = t.id === selectedCaseId;
@@ -595,10 +943,20 @@ function renderCaseList() {
     const humanAction = CASE_HUMAN_STATE[t.id];
     const badgeText = humanAction || stateDef.label;
     const badgeClass = humanAction ? humanActionBadgeClass(humanAction) : stateDef.badge;
+    /* Bottom-left line: payment reference (if it arrived) and when it showed up. The status is
+       already in the badge above, so it is not repeated here. */
+    const ref = PAYMENT_ARRIVALS[t.id] ? escapeHtml(PAYMENT_ARRIVALS[t.id].reference) + " &middot; " : "";
+    const timeText = madeTimeText(t.id);
+    const payLine = timeText
+      ? "<div style=\"font-size: var(--fs-0); color: var(--ink-3); margin-top: var(--sp-1); text-align: left;\">" +
+        ref + "Payment made " + escapeHtml(timeText) + "</div>"
+      : "";
     html += "<div class=\"case-card" + (isActive ? " active" : "") + "\" onclick=\"selectCase('" + t.id + "')\">" +
       "<div class=\"id\">" + t.id + "</div>" +
       "<div class=\"title\">" + escapeHtml(t.counterparty) + "</div>" +
       "<span class=\"badge " + badgeClass + "\" style=\"margin-top: var(--sp-1);\">" + escapeHtml(badgeText) + "</span>" +
+      (UNSEEN_ARRIVALS[t.id] ? " <span class=\"badge info\" style=\"margin-top: var(--sp-1);\">New &middot; " + escapeHtml(arrivalTime(t.id)) + "</span>" : "") +
+      payLine +
       "</div>";
   });
   html += "</div>";
@@ -614,11 +972,26 @@ function renderMainPanel() {
 
     let html = "<div class=\"empty\">";
     html += "<div class=\"headline\">ScreenGate</div>";
-    html += "<p>Screens counterparties and beneficiary banks in cross-border payments against a sanctions watchlist, and recommends Pass, Enhanced Due Diligence, or Escalate - a human always makes the final call.</p>";
+    html += "<p>When a payments company or bank sends money abroad for its clients, it must check that the receiver is not on a list of people and companies it is forbidden to pay. ScreenGate is a demo of an assistant that helps the person doing that check.</p>";
+    html += "<div style=\"text-align:left; max-width: 640px; margin: var(--sp-4) auto 0;\">";
+    html += "<p><strong>What happens to a payment</strong></p>";
+    html += "<ol style=\"padding-left: var(--sp-5);\">";
+    html += "<li><strong>A payment arrives.</strong> For example, a company in Dubai pays $22,000 to a new supplier in India.</li>";
+    html += "<li><strong>The company's payment system checks it.</strong> A new receiver, a large amount, or a high-risk country means the payment is paused and sent for checking. Anything else carries on without ScreenGate.</li>";
+    html += "<li><strong>ScreenGate checks the names.</strong> It compares the receiver and their bank with the list, reads their ID details, and writes down what it found and why. This is the part ScreenGate does.</li>";
+    html += "<li><strong>A person decides.</strong> They approve, or send it to the compliance manager. ScreenGate never approves or blocks anything.</li>";
+    html += "</ol>";
+    html += "<p class=\"boundary-note\">Pausing and releasing the money happen in the company's own payment system. This demo imitates those steps, and no money moves.</p>";
+    html += "<p><strong>Try it</strong></p>";
+    html += "<ol style=\"padding-left: var(--sp-5);\">";
+    html += "<li>Click <strong>Check for new payments</strong> to see a payment arrive and get checked, or <strong>Load sample payments</strong> to fill the list. The shortcuts on the left, such as \"Confirmed sanctions match\", jump straight to typical examples. Then click <strong>Run this payment</strong>.</li>";
+    html += "<li>Read the decision and the reasons, then click <strong>Approve</strong> or <strong>Escalate</strong> yourself.</li>";
+    html += "</ol>";
+    html += "<p class=\"boundary-note\">This is a demo. Payments and decisions exist only on this page and are cleared when you reload. ScreenGate checks each payment on its own and does not remember earlier ones.</p>";
+    html += "</div>";
     if (!hasKey) {
-      html += "<p class=\"boundary-note\">No API key saved yet. Open Settings above and paste your Anthropic API key before running a case.</p>";
+      html += "<p class=\"boundary-note\">To run the AI, click the \"AI key\" button at the top right and paste your own Anthropic API key. It stays in your browser only and is never sent to this website. Without a key you can still look around and read the examples.</p>";
     }
-    html += "<p>Click a case card, or one of the chips above them, to see its details and run the agent.</p>";
     html += "</div>";
     body.innerHTML = html;
     return;
@@ -629,22 +1002,32 @@ function renderMainPanel() {
   const bankProfile = findProfile(t.beneficiaryBank);
 
   let html = "";
-  html += "<h2 style=\"font-size: var(--fs-3); margin: 0 0 var(--sp-2);\">" + t.id + " &mdash; " + t.corridor + " &mdash; $" + t.amountUsd.toLocaleString() + "</h2>";
+  html += "<div style=\"display:flex; align-items:center; gap: var(--sp-3); flex-wrap:wrap; margin: 0 0 var(--sp-2);\">" +
+    "<h2 style=\"font-size: var(--fs-3); margin: 0;\">" + t.id + " &mdash; " + t.corridor + " &mdash; $" + t.amountUsd.toLocaleString() + "</h2>" +
+    "<span id=\"rec-" + t.id + "\" style=\"display:inline-flex; align-items:center; gap: var(--sp-2);\">" + renderRecommendationBadge(t.id) + "</span></div>";
+  html += "<div class=\"zone facts\"><div class=\"zone-label\">Facts from the payment record</div>";
+  html += "<div id=\"payBanner-" + t.id + "\">" + renderPaymentBanner(t.id) + "</div>";
 
+  /* Stages 1 and 2 sit in a fold (closed by default) so the findings and the decision are
+     higher on screen; the summary line keeps the key facts visible. */
+  html += "<details style=\"margin-top: var(--sp-3);\"><summary style=\"cursor:pointer; color: var(--ink-2);\"><strong>Stage 1 Input and Stage 2 Context</strong> &middot; " +
+    escapeHtml(t.counterparty) + " &rarr; " + escapeHtml(t.beneficiaryBank) + " (click to open)</summary>";
   html += "<div class=\"stage\" data-n=\"1\">Input</div>";
   html += "<div class=\"field\"><div class=\"k\">Transaction</div><div class=\"v\">" + t.id + ", " + t.corridor + ", $" + t.amountUsd.toLocaleString() + "</div></div>";
-  html += "<div class=\"field\"><div class=\"k\">Counterparty</div><div class=\"v\">" + escapeHtml(t.counterparty) + " (" + escapeHtml(t.counterpartyJurisdiction) + ")</div></div>";
-  html += "<div class=\"field\"><div class=\"k\">Beneficiary Bank</div><div class=\"v\">" + escapeHtml(t.beneficiaryBank) + " (" + escapeHtml(t.beneficiaryBankJurisdiction) + ")</div></div>";
-  html += "<div class=\"field\"><div class=\"k\">Triggers</div><div class=\"v\">" + escapeHtml(triggerList(t)) + "</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Receiver</div><div class=\"v\">" + escapeHtml(t.counterparty) + " (" + escapeHtml(t.counterpartyJurisdiction) + ")</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Receiver's bank</div><div class=\"v\">" + escapeHtml(t.beneficiaryBank) + " (" + escapeHtml(t.beneficiaryBankJurisdiction) + ")</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Why it was flagged</div><div class=\"v\">" + escapeHtml(triggerList(t)) + "</div></div>";
 
   html += "<div class=\"stage\" data-n=\"2\">Context</div>";
-  html += "<div class=\"field\"><div class=\"k\">Counterparty Profile</div><div class=\"v\">" + escapeHtml(renderProfileLine(counterpartyProfile)) + "</div></div>";
-  html += "<div class=\"field\"><div class=\"k\">Bank Profile</div><div class=\"v\">" + escapeHtml(renderProfileLine(bankProfile)) + "</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Receiver profile</div><div class=\"v\">" + escapeHtml(renderProfileLine(counterpartyProfile)) + "</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Receiver's bank profile</div><div class=\"v\">" + escapeHtml(renderProfileLine(bankProfile)) + "</div></div>";
   html += "<div class=\"field\"><div class=\"k\">Prior History</div><div class=\"v\">" + escapeHtml(t.priorHistory) + "</div></div>";
   if (t.notes) html += "<div class=\"field\"><div class=\"k\">Notes</div><div class=\"v\">" + escapeHtml(t.notes) + "</div></div>";
   html += "<p class=\"boundary-note\">The agent also reads the full watchlist, jurisdiction risk tiers, and escalation policy on every run - not shown here per case since they are the same for all cases.</p>";
+  html += "</details>";
+  html += "</div>";
 
-  html += "<div style=\"margin-top: var(--sp-4);\"><button class=\"btn primary\" onclick=\"runCase('" + t.id + "')\">Run</button></div>";
+  html += "<div style=\"margin-top: var(--sp-4);\"><button class=\"btn primary\" onclick=\"runCase('" + t.id + "')\">Run this payment</button></div>";
   html += "<div id=\"result-" + t.id + "\" style=\"margin-top: var(--sp-4);\">";
 
   const cached = CASE_RESULTS[t.id];
@@ -652,9 +1035,12 @@ function renderMainPanel() {
     cached.RECOMMENDED_DECISION !== "(unparsed output)" && cached.RECOMMENDED_DECISION !== "(no decision)";
   if (cachedIsRealResult) {
     html += renderParsedOutput(cached, t.id);
+  } else if (SCREENING_NOW[t.id]) {
+    html += "<span class=\"thinking\">ScreenGate is checking this payment...</span>";
   }
 
   html += "</div>";
+  html += "<div id=\"history-" + t.id + "\">" + renderPaymentHistory(t.id) + "</div>";
 
   body.innerHTML = html;
 }
@@ -664,9 +1050,9 @@ function renderMainPanel() {
 const OUTPUT_FIELDS = [
   ["TRANSACTION_ID", "Transaction ID"],
   ["CORRIDOR", "Corridor"],
-  ["TRIGGER_CRITERIA_MET", "Trigger Criteria Met"],
-  ["COUNTERPARTY_SCREENING_RESULT", "Counterparty Screening Result"],
-  ["BENEFICIARY_BANK_SCREENING_RESULT", "Beneficiary Bank Screening Result"],
+  ["TRIGGER_CRITERIA_MET", "Why it was flagged"],
+  ["COUNTERPARTY_SCREENING_RESULT", "Receiver screening result"],
+  ["BENEFICIARY_BANK_SCREENING_RESULT", "Receiver's bank screening result"],
   ["CITED_REASONING", "Cited Reasoning"],
   ["PRIOR_TRANSACTION_HISTORY", "Prior Transaction History"],
   ["RECOMMENDED_DECISION", "Recommended Decision"],
@@ -709,13 +1095,43 @@ function renderCitationTags(citationsText) {
    OUTPUT_FIELDS renders under stage 4 OUTPUT instead. */
 const DECISION_FIELD_KEYS = ["RECOMMENDED_DECISION", "WHY"];
 
-function renderParsedOutput(values, transactionId) {
+/* Plain-language label + colour for ScreenGate's recommendation. */
+function decisionBadge(values) {
   const decision = (values.RECOMMENDED_DECISION || "").toLowerCase();
   const isEscalation = decision.indexOf("escalate") !== -1;
-  const badgeClass = isEscalation ? "danger" : "ok";
-  const statusText = isEscalation ? "REFUSED-ESCALATE" : "OK";
+  const isExtraChecks = !isEscalation && (decision.indexOf("enhanced") !== -1 || decision.indexOf("edd") !== -1);
+  return {
+    cls: isEscalation ? "danger" : (isExtraChecks ? "warn" : "ok"),
+    text: isEscalation ? "Cannot clear: escalate" : (isExtraChecks ? "Extra checks needed" : "Looks clear")
+  };
+}
 
-  let html = "<div class=\"stage\" data-n=\"3\">Decision</div>";
+/* The recommendation shown next to the payment title, so the answer to "what does ScreenGate
+   say?" is visible before any scrolling. */
+function renderRecommendationBadge(id) {
+  const r = CASE_RESULTS[id];
+  const isReal = r && r.RECOMMENDED_DECISION &&
+    r.RECOMMENDED_DECISION !== "(unparsed output)" && r.RECOMMENDED_DECISION !== "(no decision)";
+  if (isReal) {
+    const b = decisionBadge(r);
+    return "<span style=\"font-size: var(--fs-0); color: var(--ink-3);\">ScreenGate recommends</span> <span class=\"badge " + b.cls + "\">" + b.text + "</span>";
+  }
+  if (SCREENING_NOW[id]) return "<span class=\"thinking\">ScreenGate is checking this payment...</span>";
+  return "<span class=\"badge neutral\">Not yet checked</span>";
+}
+
+function refreshRecommendation(id) {
+  const el = document.getElementById("rec-" + id);
+  if (el) el.innerHTML = renderRecommendationBadge(id);
+}
+
+function renderParsedOutput(values, transactionId) {
+  const b = decisionBadge(values);
+  const badgeClass = b.cls;
+  const statusText = b.text;
+
+  let html = "<div class=\"zone findings\"><div class=\"zone-label\">ScreenGate's findings <span class=\"badge info\">AI-generated, please verify</span></div>";
+  html += "<div class=\"stage\" data-n=\"3\">Decision</div>";
   html += "<span class=\"badge " + badgeClass + "\">" + statusText + "</span>";
   OUTPUT_FIELDS.forEach(function (f) {
     const key = f[0], label = f[1];
@@ -734,8 +1150,12 @@ function renderParsedOutput(values, transactionId) {
       escapeHtml(values[key] || "(not provided)") + "</div></div>";
   });
 
+  html += "</div>";
+
+  html += "<div class=\"zone decision\"><div class=\"zone-label\">Your decision (a person decides)</div>";
   html += "<div class=\"stage\" data-n=\"5\">Review</div>";
   html += renderGate(transactionId);
+  html += "</div>";
   return html;
 }
 
@@ -756,6 +1176,16 @@ function humanActionBadgeClass(action) {
   return "neutral";
 }
 
+/* What happens after the person's click. Honest about what this demo does not do. */
+function nextStepText(action) {
+  const a = (action || "").toLowerCase();
+  if (a.indexOf("escalate") !== -1) return "Recorded and sent to the compliance manager with your note. The manager's own view is not built in this demo.";
+  if (a.indexOf("override") !== -1) return "Recorded as an override of ScreenGate's recommendation. The company's payment system would now decide whether to release the payment. That link is not built in this demo.";
+  if (a.indexOf("approve") !== -1) return "Recorded. The company's payment system would now release this payment. That link is not built in this demo.";
+  if (a.indexOf("edit") !== -1) return "Your edit is saved. Now Approve or Escalate to finish.";
+  return "";
+}
+
 function renderGate(id) {
   return "<div style=\"margin-top: var(--sp-4); display:flex; gap: var(--sp-2); align-items:center; flex-wrap: wrap;\">" +
     "<button class=\"btn approve\" onclick=\"approveCase('" + id + "')\">Approve</button>" +
@@ -767,6 +1197,7 @@ function renderGate(id) {
     "<textarea id=\"editText-" + id + "\" rows=\"3\" style=\"width:100%; font-family: var(--font-body); font-size: var(--fs-1); background: var(--bg-inset); color: var(--ink); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); padding: var(--sp-2);\"></textarea><br>" +
     "<button class=\"btn primary\" style=\"margin-top: var(--sp-2);\" onclick=\"saveEdit('" + id + "')\">Save edit</button>" +
     "</div>" +
+    "<p class=\"boundary-note\" id=\"nextStep-" + id + "\" style=\"" + (CASE_HUMAN_STATE[id] ? "" : "display:none;") + "\">" + escapeHtml(nextStepText(CASE_HUMAN_STATE[id])) + "</p>" +
     "<p class=\"boundary-note\">Nothing is sent without human approval.</p>";
 }
 
@@ -782,8 +1213,11 @@ function logRun(transactionId, humanAction, note) {
   CASE_HUMAN_STATE[transactionId] = humanAction;
   const statusEl = document.getElementById("gateStatus-" + transactionId);
   if (statusEl) statusEl.textContent = humanAction + " at " + new Date().toLocaleTimeString() + (note ? " - " + note : "");
+  const nextEl = document.getElementById("nextStep-" + transactionId);
+  if (nextEl) { nextEl.textContent = nextStepText(humanAction); nextEl.style.display = ""; }
   renderRunLog();
   renderCaseList();
+  refreshPaymentBanner(transactionId);
 }
 
 function approveCase(id) {
@@ -823,20 +1257,43 @@ function saveEdit(id) {
   logRun(id, "Edited", editedText);
 }
 
+/* Each payment's own story, drawn from the same activity log. */
+function renderPaymentHistory(id) {
+  const rows = RUN_LOG.filter(function (e) { return e.transactionId === id; });
+  let html = "<div class=\"zone\"><div class=\"zone-label\">History of this payment</div>";
+  if (rows.length === 0) {
+    html += "<p class=\"boundary-note\" style=\"margin-top:0;\">Nothing has happened to this payment yet.</p>";
+  }
+  rows.forEach(function (e) {
+    const detail = e.humanAction +
+      (e.system && e.agentDecision && e.agentDecision !== "-" ? " - recommended: " + e.agentDecision : "") +
+      (e.note ? " - " + e.note : "");
+    html += "<div class=\"field\"><div class=\"k\">" + escapeHtml(e.time) + "</div><div class=\"v\">" + escapeHtml(detail) + "</div></div>";
+  });
+  return html + "</div>";
+}
+
+function refreshHistory(id) {
+  const el = id ? document.getElementById("history-" + id) : null;
+  if (el) el.innerHTML = renderPaymentHistory(id);
+}
+
 function renderRunLog() {
   const panel = document.getElementById("runLogPanel");
   const countEl = document.getElementById("runLogCount");
   if (countEl) countEl.textContent = RUN_LOG.length;
+  refreshHistory(selectedCaseId);
 
   if (RUN_LOG.length === 0) {
-    panel.innerHTML = "<p class=\"boundary-note\">No human actions recorded yet. Run a case, then Approve, Edit, or Escalate it.</p>";
+    panel.innerHTML = "<p class=\"boundary-note\">Nothing recorded yet. Check a payment, then Approve, Edit, or Escalate it.</p>";
     return;
   }
 
   let html = "";
   RUN_LOG.slice().reverse().forEach(function (entry) {
     const actionLower = entry.humanAction.toLowerCase();
-    const actionClass = actionLower.indexOf("approve") !== -1 ? "action-approve"
+    const actionClass = (entry.system || actionLower.indexOf("received") !== -1) ? ""
+      : actionLower.indexOf("approve") !== -1 ? "action-approve"
       : actionLower.indexOf("edit") !== -1 ? "action-edit"
       : "action-escalate";
     html += "<div class=\"row\"><span class=\"t\">" + escapeHtml(entry.time) + "</span><span>" +
@@ -851,6 +1308,9 @@ function renderRunLog() {
 
 function showView(view) {
   document.getElementById("consoleView").style.display = view === "console" ? "grid" : "none";
+  document.getElementById("todayStrip").style.display = view === "console" ? "block" : "none";
+  if (view !== "console") document.getElementById("newPaymentAlert").style.display = "none";
+  else renderNewPaymentAlert();
   document.getElementById("evalsView").style.display = view === "evals" ? "block" : "none";
   document.getElementById("navConsoleBtn").classList.toggle("primary", view === "console");
   document.getElementById("navEvalsBtn").classList.toggle("primary", view === "evals");
@@ -954,9 +1414,10 @@ function renderImprovementCard() {
   let html = "<div class=\"panel\" style=\"margin-top: var(--sp-4);\">";
   html += "<div class=\"panel-head\">Improvement</div>";
   html += "<div class=\"panel-body\">";
-  html += improvementRow("before", "Before");
-  html += improvementRow("change", "Change");
-  html += improvementRow("after", "After");
+  html += "<p class=\"boundary-note\" style=\"margin-top:0;\">One problem found while testing ScreenGate, how it was fixed, and proof the fix worked.</p>";
+  html += improvementRow("before", "What went wrong");
+  html += improvementRow("change", "What was changed");
+  html += improvementRow("after", "Result after the fix");
   html += "</div></div>";
   return html;
 }
@@ -972,10 +1433,11 @@ function loadLimitations() {
   } catch (err) { /* fall through to default */ }
   return [
     "Screens only sanctions/watchlist name matches for the UAE-India and UAE-UK corridors. It does not perform PEP, UBO, or adverse media checks - those are always escalated for manual review, never assessed by the agent.",
-    "Processes one transaction at a time, or a manual sequential sweep via Run All. There is no live payment feed, no queue, and nothing triggers the agent automatically when a new transaction arrives.",
+    "Processes one transaction at a time, or a manual sweep with the 'Run all waiting payments' button. There is no live payment feed, and nothing triggers the agent automatically when a new transaction arrives. Decisions are not saved: the demo resets when the page reloads, whereas a real system would keep every decision for audit.",
     "Requires data in this prototype's exact format - the embedded watchlist, counterparty profiles, and transaction records. It cannot ingest a differently structured feed or a free-text case description without rebuilding the data layer.",
     "English-only. The watchlist, policy text, and agent reasoning have not been tested against non-English names, aliases, or transliteration variants, which is a real challenge in cross-border sanctions screening.",
-    "Name matching relies entirely on the model's own judgment - no dedicated fuzzy-matching algorithm, no confidence score, and no evaluation against a large adversarial test set beyond the 6 eval cases and one stress test built here."
+    "Name matching relies entirely on the model's own judgment - no dedicated fuzzy-matching algorithm, no confidence score, and no testing against a large set of tricky name variations beyond the 6 test cases and one extra hard test built here.",
+    "The payment list can be filtered by status (waiting, approved, escalated) but not sorted by risk or arrival time, and there is no summary table across payments. A sortable, filterable summary view is the natural next step for a team handling many flagged payments a day. It is future work, not part of this prototype."
   ].join("\n");
 }
 
@@ -1001,9 +1463,30 @@ function renderLimitationsPanel() {
   return html;
 }
 
+/* Ideas decided on but deliberately left out of this prototype. Fixed text, not editable. */
+const NEXT_SCOPE = [
+  "Second approver for very large payments: above an agreed amount, a second person must also approve before the payment is released.",
+  "Sortable, filterable summary view of all payments: order the queue by risk or arrival time so a busy team sees the most serious ones first."
+];
+
+function renderNextScopePanel() {
+  let html = "<div class=\"panel\" style=\"margin-top: var(--sp-4);\">";
+  html += "<div class=\"panel-head\">Next scope (not built yet)</div>";
+  html += "<div class=\"panel-body\">";
+  html += "<p class=\"boundary-note\" style=\"margin-top:0;\">Ideas deliberately left out of this prototype.</p>";
+  html += "<ul style=\"padding-left: var(--sp-5); margin: var(--sp-2) 0 0;\">";
+  NEXT_SCOPE.forEach(function (item) { html += "<li style=\"margin-bottom: var(--sp-2);\">" + escapeHtml(item) + "</li>"; });
+  html += "</ul></div></div>";
+  return html;
+}
+
 function renderEvalsView() {
   const body = document.getElementById("evalsBody");
-  let html = renderEvalScoreboard();
+  let html = "<div class=\"panel\" style=\"margin-bottom: var(--sp-4);\"><div class=\"panel-body\">" +
+    "<strong>For the compliance manager or reviewer, not the analyst's daily work.</strong>" +
+    "<p style=\"margin: var(--sp-2) 0 0; color: var(--ink-2);\">This page shows how ScreenGate was tested on 6 known payments. For each one, the expected result was written in advance, ScreenGate was run, and a person judged whether it did the right thing. It also shows one fix made after testing, and what ScreenGate cannot do.</p>" +
+    "</div></div>";
+  html += renderEvalScoreboard();
   html += "<table class=\"evals-table\"><tr><th>Case</th><th>Expected Behavior</th><th>Actual</th><th>Verdict</th><th>Note</th><th></th></tr>";
   EVAL_CASES.forEach(function (ec) {
     const record = EVAL_RECORDS[ec.caseId] || {};
@@ -1028,6 +1511,7 @@ function renderEvalsView() {
   html += "</table>";
   html += renderImprovementCard();
   html += renderLimitationsPanel();
+  html += renderNextScopePanel();
   body.innerHTML = html;
 }
 
@@ -1072,7 +1556,8 @@ async function runCaseCore(transactionId) {
   const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
 
   if (!apiKey) {
-    if (resultEl) resultEl.innerHTML = "<div class=\"error-note\">No API key saved. Go to Settings above, paste your Anthropic API key, and click Save key.</div>";
+    openKeyPanel();
+    if (resultEl) resultEl.innerHTML = "<div class=\"error-note\">To run the AI, add your own Anthropic API key in the box that just opened at the top, then click Run this payment again.</div>";
     return "error";
   }
 
@@ -1115,7 +1600,17 @@ async function runCaseCore(transactionId) {
     const parsed = parseAgentOutput(text);
     if (parsed) {
       CASE_RESULTS[transactionId] = parsed;
+      RUN_LOG.push({
+        time: new Date().toLocaleTimeString(),
+        transactionId: transactionId,
+        agentDecision: parsed.RECOMMENDED_DECISION || "-",
+        humanAction: "ScreenGate checked this payment",
+        note: "",
+        system: true
+      });
+      renderRunLog();
       if (resultEl) resultEl.innerHTML = renderParsedOutput(parsed, transactionId);
+      refreshRecommendation(transactionId);
       const decision = (parsed.RECOMMENDED_DECISION || "").toLowerCase();
       return decision.indexOf("escalate") !== -1 ? "escalate" : "ok";
     } else {
@@ -1134,31 +1629,68 @@ async function runCaseCore(transactionId) {
 }
 
 async function runCase(transactionId) {
-  await runCaseCore(transactionId);
+  if (SCREENING_NOW[transactionId]) return;   /* already being checked: ignore a second click */
+  SCREENING_NOW[transactionId] = true;
+  refreshRecommendation(transactionId);
+  try {
+    await runCaseCore(transactionId);
+  } finally {
+    delete SCREENING_NOW[transactionId];
+  }
+  refreshRecommendation(transactionId);
+  renderCaseList();
+}
+
+/* "Check all" can be running only once at a time, and the person can pause it between payments. */
+let checkingAll = false;
+let pauseRequested = false;
+
+function pauseCheckAll() {
+  pauseRequested = true;
+  runAllProgressText += " Pausing after this payment...";
   renderCaseList();
 }
 
 async function runAll() {
-  let okCount = 0, escalateCount = 0, errorCount = 0;
-  runAllSummaryHtml = "";
+  if (checkingAll || simulating) return;
+  let errorCount = 0, paused = false, done = 0;
 
-  for (let i = 0; i < TRANSACTIONS.length; i++) {
-    const t = TRANSACTIONS[i];
-    /* selectCase() and renderCaseList() rebuild the whole left panel, so progress text is
-       kept in runAllProgressText (rendered by renderCaseList) rather than in cached elements. */
-    runAllProgressText = "Running " + (i + 1) + " of " + TRANSACTIONS.length + ": " + t.id + "...";
-    selectCase(t.id);
-
-    const outcome = await runCaseCore(t.id);
-    if (outcome === "ok") okCount++;
-    else if (outcome === "escalate") escalateCount++;
-    else errorCount++;
+  /* Only listed payments that ScreenGate has not checked yet (re-checking would cost extra calls). */
+  const batch = listedTransactions().filter(function (t) { return caseState(t.id) === "new"; });
+  if (batch.length === 0) {
+    runAllProgressText = "Nothing waiting to be checked. Click Check for new payments or Load sample payments first.";
     renderCaseList();
+    return;
   }
 
-  runAllProgressText = "Done - ran all " + TRANSACTIONS.length + " cases.";
-  runAllSummaryHtml = "<p><strong>Run All summary:</strong> " + okCount + " OK, " + escalateCount +
-    " REFUSED-ESCALATE, " + errorCount + " errors (out of " + TRANSACTIONS.length + " total).</p>";
+  checkingAll = true;
+  pauseRequested = false;
+  try {
+    for (let i = 0; i < batch.length; i++) {
+      if (pauseRequested) { paused = true; break; }
+      const t = batch[i];
+      /* selectCase() and renderCaseList() rebuild the whole left panel, so progress text is
+         kept in runAllProgressText (rendered by renderCaseList) rather than in cached elements. */
+      runAllProgressText = "Checking " + (i + 1) + " of " + batch.length + ": " + t.id + "...";
+      SCREENING_NOW[t.id] = true;
+      selectCase(t.id);
+
+      const outcome = await runCaseCore(t.id);
+      delete SCREENING_NOW[t.id];
+      done++;
+      if (outcome !== "ok" && outcome !== "escalate") errorCount++;
+      renderCaseList();
+    }
+  } finally {
+    checkingAll = false;
+  }
+
+  runAllProgressText = paused
+    ? "Paused after " + done + " of " + batch.length + ". Click Run all waiting payments to continue with the rest."
+    : "Done - checked " + done + " payments.";
+  if (errorCount > 0) {
+    runAllProgressText += " " + errorCount + " could not be checked (see the activity log).";
+  }
   renderCaseList();
 }
 
@@ -1166,8 +1698,25 @@ async function runAll() {
 
 function updateKeyStatus() {
   const status = document.getElementById("keyStatus");
-  const saved = localStorage.getItem(API_KEY_STORAGE_KEY);
-  status.textContent = saved ? "Key saved." : "No key saved yet. Paste your Anthropic API key above.";
+  const chip = document.getElementById("keyChip");
+  let saved = null;
+  try { saved = localStorage.getItem(API_KEY_STORAGE_KEY); } catch (err) { saved = null; }
+  status.textContent = saved ? "Key saved." : "No key saved yet. Paste your Anthropic API key here.";
+  if (chip) chip.textContent = saved ? "AI key: saved" : "AI key: needed";
+}
+
+/* The key box stays hidden (so it never appears in a recording) until the chip is clicked
+   or someone tries to Run without a key. */
+function toggleKeyPanel() {
+  const panel = document.getElementById("settingsPanel");
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+  if (panel.style.display === "block") document.getElementById("apiKeyInput").focus();
+}
+
+function openKeyPanel() {
+  const panel = document.getElementById("settingsPanel");
+  panel.style.display = "block";
+  document.getElementById("apiKeyInput").focus();
 }
 
 document.getElementById("saveKeyBtn").addEventListener("click", function () {
@@ -1176,6 +1725,7 @@ document.getElementById("saveKeyBtn").addEventListener("click", function () {
   if (value) {
     localStorage.setItem(API_KEY_STORAGE_KEY, value);
     input.value = "";
+    document.getElementById("settingsPanel").style.display = "none";
   }
   updateKeyStatus();
 });
