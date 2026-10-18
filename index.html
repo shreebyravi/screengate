@@ -110,6 +110,15 @@ body {
 }
 @media (max-width: 1100px) { .console { grid-template-columns: 1fr; } }
 
+/* Phones and tablets: show the payment list OR the payment detail, never both stacked, so opening a
+   payment lands on it instead of below the whole list. */
+.btn.back-btn { display: none; }
+@media (max-width: 1100px) {
+  .btn.back-btn { display: inline-flex; margin-bottom: var(--sp-3); }
+  body.detail-mode .console > .panel:first-child { display: none; }
+  body.detail-mode #todayStrip { display: none !important; }
+}
+
 .panel {
   background: var(--bg-raise); border: var(--border-w) solid var(--line);
   border-radius: var(--radius); box-shadow: var(--shadow);
@@ -317,7 +326,7 @@ body {
     <div class="panel-body" id="caseListBody"></div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="detailPanel">
     <div class="panel-head">Case Detail</div>
     <div class="panel-body" id="mainWorkArea"></div>
   </div>
@@ -537,8 +546,32 @@ function selectCase(id) {
   delete UNSEEN_ARRIVALS[id];
   ALERT_IDS = ALERT_IDS.filter(function (x) { return x !== id; });
   selectedCaseId = id;
+  syncDetailMode();
   renderCaseList();
   renderMainPanel();
+}
+
+/* On narrow screens an opened payment replaces the list (see the CSS); this flags that state. */
+function syncDetailMode() {
+  document.body.classList.toggle("detail-mode", !!selectedCaseId);
+}
+
+function isNarrowScreen() {
+  return window.matchMedia("(max-width: 1100px)").matches;
+}
+
+/* A person clicked a payment: open it, and on a phone jump to the top of its detail. */
+function openPayment(id) {
+  selectCase(id);
+  if (isNarrowScreen()) window.scrollTo(0, 0);
+}
+
+function backToList() {
+  selectedCaseId = null;
+  syncDetailMode();
+  renderCaseList();
+  renderMainPanel();
+  window.scrollTo(0, 0);
 }
 
 /* Short chip labels for the eval cases - full names/descriptions live in EVAL_CASES for the Evals view (Section C) */
@@ -592,7 +625,7 @@ function loadSamplePayments() {
 
 function openExample(id) {
   OPENED_EXAMPLES[id] = true;
-  selectCase(id);
+  openPayment(id);
 }
 
 function queueCounts() {
@@ -881,7 +914,7 @@ function renderNewPaymentAlert() {
 
 function openAlertPayment() {
   const id = ALERT_IDS[0];
-  if (id) selectCase(id);
+  if (id) openPayment(id);
   else renderNewPaymentAlert();
 }
 
@@ -951,7 +984,7 @@ function renderCaseList() {
       ? "<div style=\"font-size: var(--fs-0); color: var(--ink-3); margin-top: var(--sp-1); text-align: left;\">" +
         ref + "Payment made " + escapeHtml(timeText) + "</div>"
       : "";
-    html += "<div class=\"case-card" + (isActive ? " active" : "") + "\" onclick=\"selectCase('" + t.id + "')\">" +
+    html += "<div class=\"case-card" + (isActive ? " active" : "") + "\" onclick=\"openPayment('" + t.id + "')\">" +
       "<div class=\"id\">" + t.id + "</div>" +
       "<div class=\"title\">" + escapeHtml(t.counterparty) + "</div>" +
       "<span class=\"badge " + badgeClass + "\" style=\"margin-top: var(--sp-1);\">" + escapeHtml(badgeText) + "</span>" +
@@ -1002,9 +1035,13 @@ function renderMainPanel() {
   const bankProfile = findProfile(t.beneficiaryBank);
 
   let html = "";
-  html += "<div style=\"display:flex; align-items:center; gap: var(--sp-3); flex-wrap:wrap; margin: 0 0 var(--sp-2);\">" +
+  html += "<button class=\"btn back-btn\" onclick=\"backToList()\">&larr; Back to payments</button>";
+  /* Title, ScreenGate's recommendation and the Run button share the top row, so on a phone the
+     action is on the first screen instead of below the facts. */
+  html += "<div style=\"display:flex; align-items:center; gap: var(--sp-3); flex-wrap:wrap; margin: 0 0 var(--sp-3);\">" +
     "<h2 style=\"font-size: var(--fs-3); margin: 0;\">" + t.id + " &mdash; " + t.corridor + " &mdash; $" + t.amountUsd.toLocaleString() + "</h2>" +
-    "<span id=\"rec-" + t.id + "\" style=\"display:inline-flex; align-items:center; gap: var(--sp-2);\">" + renderRecommendationBadge(t.id) + "</span></div>";
+    "<span id=\"rec-" + t.id + "\" style=\"display:inline-flex; align-items:center; gap: var(--sp-2);\">" + renderRecommendationBadge(t.id) + "</span>" +
+    "<button class=\"btn primary\" onclick=\"runCase('" + t.id + "')\">Run this payment</button></div>";
   html += "<div class=\"zone facts\"><div class=\"zone-label\">Facts from the payment record</div>";
   html += "<div id=\"payBanner-" + t.id + "\">" + renderPaymentBanner(t.id) + "</div>";
 
@@ -1027,7 +1064,6 @@ function renderMainPanel() {
   html += "</details>";
   html += "</div>";
 
-  html += "<div style=\"margin-top: var(--sp-4);\"><button class=\"btn primary\" onclick=\"runCase('" + t.id + "')\">Run this payment</button></div>";
   html += "<div id=\"result-" + t.id + "\" style=\"margin-top: var(--sp-4);\">";
 
   const cached = CASE_RESULTS[t.id];
@@ -1041,6 +1077,7 @@ function renderMainPanel() {
 
   html += "</div>";
   html += "<div id=\"history-" + t.id + "\">" + renderPaymentHistory(t.id) + "</div>";
+  html += "<button class=\"btn back-btn\" style=\"margin-top: var(--sp-4);\" onclick=\"backToList()\">&larr; Back to payments</button>";
 
   body.innerHTML = html;
 }
@@ -1639,6 +1676,11 @@ async function runCase(transactionId) {
   }
   refreshRecommendation(transactionId);
   renderCaseList();
+  /* On a phone, bring the findings and the Approve / Edit / Escalate buttons into view. */
+  if (isNarrowScreen() && selectedCaseId === transactionId) {
+    const res = document.getElementById("result-" + transactionId);
+    if (res && res.children.length) res.scrollIntoView({ block: "start" });
+  }
 }
 
 /* "Check all" can be running only once at a time, and the person can pause it between payments. */
