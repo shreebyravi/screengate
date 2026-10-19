@@ -327,7 +327,7 @@ body {
   </div>
 
   <div class="panel" id="detailPanel">
-    <div class="panel-head">Case Detail</div>
+    <div class="panel-head">Payment detail</div>
     <div class="panel-body" id="mainWorkArea"></div>
   </div>
 
@@ -530,6 +530,16 @@ function renderProfileLine(profile) {
     (profile.notes ? " | Notes: " + profile.notes : "");
 }
 
+/* Plain words for the machine labels, so "Why it was flagged" matches the payment-system check
+   ("New receiver", "over $10,000", "high-risk country"). Display only; the agent still sees and
+   writes the original labels. */
+function friendlyTriggers(text) {
+  return String(text)
+    .replace(/new-counterparty/g, "new receiver")
+    .replace(/over-threshold/g, "amount over $" + MOCK_LIMIT_USD.toLocaleString())
+    .replace(/high-risk-jurisdiction/g, "high-risk country");
+}
+
 function triggerList(t) {
   const list = [];
   if (t.triggerNewCounterparty) list.push("new-counterparty");
@@ -723,7 +733,7 @@ function paymentStatus(id) {
   const arrival = PAYMENT_ARRIVALS[id];
   if (!arrival) return null;
   const human = (CASE_HUMAN_STATE[id] || "").toLowerCase();
-  if (human.indexOf("escalate") !== -1) return { text: "Escalated to compliance manager", badge: "danger" };
+  if (human.indexOf("escalate") !== -1) return { text: "Escalated to the compliance officer", badge: "danger" };
   if (human.indexOf("approve") !== -1) return { text: "Approved by analyst", badge: "ok" };
   if (arrival.screenError) return { text: "Screening did not complete", badge: "warn" };
   if (CASE_RESULTS[id]) return { text: "Waiting for review", badge: "warn" };
@@ -1012,7 +1022,7 @@ function renderMainPanel() {
     html += "<li><strong>A payment arrives.</strong> For example, a company in Dubai pays $22,000 to a new supplier in India.</li>";
     html += "<li><strong>The company's payment system checks it.</strong> A new receiver, a large amount, or a high-risk country means the payment is paused and sent for checking. Anything else carries on without ScreenGate.</li>";
     html += "<li><strong>ScreenGate checks the names.</strong> It compares the receiver and their bank with the list, reads their ID details, and writes down what it found and why. This is the part ScreenGate does.</li>";
-    html += "<li><strong>A person decides.</strong> They approve, or send it to the compliance manager. ScreenGate never approves or blocks anything.</li>";
+    html += "<li><strong>A person decides.</strong> They approve, or send it to the compliance officer. ScreenGate never approves or blocks anything.</li>";
     html += "</ol>";
     html += "<p class=\"boundary-note\">Pausing and releasing the money happen in the company's own payment system. This demo imitates those steps, and no money moves.</p>";
     html += "<p><strong>Try it</strong></p>";
@@ -1050,10 +1060,10 @@ function renderMainPanel() {
   html += "<details style=\"margin-top: var(--sp-3);\"><summary style=\"cursor:pointer; color: var(--ink-2);\"><strong>Stage 1 Input and Stage 2 Context</strong> &middot; " +
     escapeHtml(t.counterparty) + " &rarr; " + escapeHtml(t.beneficiaryBank) + " (click to open)</summary>";
   html += "<div class=\"stage\" data-n=\"1\">Input</div>";
-  html += "<div class=\"field\"><div class=\"k\">Transaction</div><div class=\"v\">" + t.id + ", " + t.corridor + ", $" + t.amountUsd.toLocaleString() + "</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Payment</div><div class=\"v\">" + t.id + ", " + t.corridor + ", $" + t.amountUsd.toLocaleString() + "</div></div>";
   html += "<div class=\"field\"><div class=\"k\">Receiver</div><div class=\"v\">" + escapeHtml(t.counterparty) + " (" + escapeHtml(t.counterpartyJurisdiction) + ")</div></div>";
   html += "<div class=\"field\"><div class=\"k\">Receiver's bank</div><div class=\"v\">" + escapeHtml(t.beneficiaryBank) + " (" + escapeHtml(t.beneficiaryBankJurisdiction) + ")</div></div>";
-  html += "<div class=\"field\"><div class=\"k\">Why it was flagged</div><div class=\"v\">" + escapeHtml(triggerList(t)) + "</div></div>";
+  html += "<div class=\"field\"><div class=\"k\">Why it was flagged</div><div class=\"v\">" + escapeHtml(friendlyTriggers(triggerList(t))) + "</div></div>";
 
   html += "<div class=\"stage\" data-n=\"2\">Context</div>";
   html += "<div class=\"field\"><div class=\"k\">Receiver profile</div><div class=\"v\">" + escapeHtml(renderProfileLine(counterpartyProfile)) + "</div></div>";
@@ -1085,13 +1095,13 @@ function renderMainPanel() {
 /* ---------- Wiring the agent: one live decision per Run click ---------- */
 
 const OUTPUT_FIELDS = [
-  ["TRANSACTION_ID", "Transaction ID"],
+  ["TRANSACTION_ID", "Payment ID"],
   ["CORRIDOR", "Corridor"],
   ["TRIGGER_CRITERIA_MET", "Why it was flagged"],
   ["COUNTERPARTY_SCREENING_RESULT", "Receiver screening result"],
   ["BENEFICIARY_BANK_SCREENING_RESULT", "Receiver's bank screening result"],
   ["CITED_REASONING", "Cited Reasoning"],
-  ["PRIOR_TRANSACTION_HISTORY", "Prior Transaction History"],
+  ["PRIOR_TRANSACTION_HISTORY", "Prior payment history"],
   ["RECOMMENDED_DECISION", "Recommended Decision"],
   ["WHY", "Why"]
 ];
@@ -1183,8 +1193,9 @@ function renderParsedOutput(values, transactionId) {
   OUTPUT_FIELDS.forEach(function (f) {
     const key = f[0], label = f[1];
     if (DECISION_FIELD_KEYS.indexOf(key) !== -1) return;
+    const shown = key === "TRIGGER_CRITERIA_MET" && values[key] ? friendlyTriggers(values[key]) : values[key];
     html += "<div class=\"field\"><div class=\"k\">" + escapeHtml(label) + "</div><div class=\"v\">" +
-      escapeHtml(values[key] || "(not provided)") + "</div></div>";
+      escapeHtml(shown || "(not provided)") + "</div></div>";
   });
 
   html += "</div>";
@@ -1216,7 +1227,7 @@ function humanActionBadgeClass(action) {
 /* What happens after the person's click. Honest about what this demo does not do. */
 function nextStepText(action) {
   const a = (action || "").toLowerCase();
-  if (a.indexOf("escalate") !== -1) return "Recorded and sent to the compliance manager with your note. The manager's own view is not built in this demo.";
+  if (a.indexOf("escalate") !== -1) return "Recorded and sent to the compliance officer with your note. The compliance officer's own view is not built in this demo.";
   if (a.indexOf("override") !== -1) return "Recorded as an override of ScreenGate's recommendation. The company's payment system would now decide whether to release the payment. That link is not built in this demo.";
   if (a.indexOf("approve") !== -1) return "Recorded. The company's payment system would now release this payment. That link is not built in this demo.";
   if (a.indexOf("edit") !== -1) return "Your edit is saved. Now Approve or Escalate to finish.";
@@ -1273,7 +1284,7 @@ function approveCase(id) {
 }
 
 function escalateCase(id) {
-  const reason = prompt("One-line reason for escalating this case to the compliance manager:");
+  const reason = prompt("One-line reason for escalating this payment to the compliance officer:");
   if (reason === null) return;
   logRun(id, "Escalated", reason);
 }
@@ -1408,7 +1419,7 @@ function renderEvalScoreboard() {
   html += statBlock("ok", s.pass, "Pass");
   html += statBlock("warn", s.needsWork, "Needs Work");
   html += statBlock("danger", s.fail, "Fail");
-  html += statBlock("", s.totalRun + " / " + EVAL_CASES.length, "Cases Run");
+  html += statBlock("", s.totalRun + " / " + EVAL_CASES.length, "Test cases run");
   html += statBlock("", lastRunText, "Last Run");
   html += "</div>";
   return html;
@@ -1503,7 +1514,9 @@ function renderLimitationsPanel() {
 /* Ideas decided on but deliberately left out of this prototype. Fixed text, not editable. */
 const NEXT_SCOPE = [
   "Second approver for very large payments: above an agreed amount, a second person must also approve before the payment is released.",
-  "Sortable, filterable summary view of all payments: order the queue by risk or arrival time so a busy team sees the most serious ones first."
+  "Sortable, filterable summary view of all payments: order the queue by risk or arrival time so a busy team sees the most serious ones first.",
+  "Customer-set payment ceilings by risk level: the customer decides the largest payment ScreenGate may handle at each risk level, and larger payments stay fully manual.",
+  "In-product feedback: a small icon on every payment where analysts can share feedback or a reason for editing or escalating, at the moment it happens."
 ];
 
 function renderNextScopePanel() {
@@ -1520,7 +1533,7 @@ function renderNextScopePanel() {
 function renderEvalsView() {
   const body = document.getElementById("evalsBody");
   let html = "<div class=\"panel\" style=\"margin-bottom: var(--sp-4);\"><div class=\"panel-body\">" +
-    "<strong>For the compliance manager or reviewer, not the analyst's daily work.</strong>" +
+    "<strong>For the head of compliance or a reviewer, not the analyst's daily work.</strong>" +
     "<p style=\"margin: var(--sp-2) 0 0; color: var(--ink-2);\">This page shows how ScreenGate was tested on 6 known payments. For each one, the expected result was written in advance, ScreenGate was run, and a person judged whether it did the right thing. It also shows one fix made after testing, and what ScreenGate cannot do.</p>" +
     "</div></div>";
   html += renderEvalScoreboard();
