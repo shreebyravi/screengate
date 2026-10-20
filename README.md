@@ -2,11 +2,11 @@
 
 An AML sanctions-screening copilot prototype for cross-border B2B payments on the UAE-India and UAE-UK corridors. A Screening Agent recommends Pass, Enhanced Due Diligence, or Escalate with cited reasoning, and a compliance analyst makes the final decision.
 
-**Created by Shree Byravi** as part of the Agentic AI Capstone (Cohort 10). Product design, evaluation, and the launch plan are Shree Byravi's work. The prototype was built with an AI coding assistant, working from those decisions.
+**Created by Shree Byravi.** Product design, evaluation, and the launch plan are Shree Byravi's work. The prototype was built with an AI coding assistant, working from those decisions.
 
 ## What this is
 
-A capstone prototype, piloted under human review. All data is synthetic: fabricated names, watchlist entries, and transactions. No real people, companies, or sanctions records are included.
+A prototype designed to be used under human review. All data is synthetic: fabricated names, watchlist entries, and transactions. No real people, companies, or sanctions records are included.
 
 ## Product case study
 
