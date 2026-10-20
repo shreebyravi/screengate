@@ -316,6 +316,10 @@ body {
   </div>
 </div>
 
+<div id="recordedBanner" style="display:none; margin: var(--sp-3) var(--sp-4) 0; padding: var(--sp-3) var(--sp-4); border: var(--border-w) dashed var(--accent); border-radius: var(--radius-sm); background: var(--bg-raise);"></div>
+
+<textarea id="exportBox" rows="6" readonly style="display:none; width: calc(100% - 2 * var(--sp-4)); margin: var(--sp-3) var(--sp-4) 0; font-family: var(--font-mono); font-size: var(--fs-0); background: var(--bg-inset); color: var(--ink); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); padding: var(--sp-2);"></textarea>
+
 <div id="newPaymentAlert" style="display:none; align-items:center; gap: var(--sp-3); flex-wrap: wrap; margin: var(--sp-3) var(--sp-4) 0; padding: var(--sp-3) var(--sp-4); border: var(--border-w) solid var(--accent); border-radius: var(--radius-sm); background: var(--bg-raise);"></div>
 
 <div id="todayStrip" style="padding: var(--sp-4) var(--sp-4) 0;"></div>
@@ -779,9 +783,11 @@ async function simulateIncomingPayment() {
   if (simulating || checkingAll || samplesLoaded) return;
   const nextId = SIM_FEED_ORDER
     .concat(TRANSACTIONS.map(function (t) { return t.id; }))
-    .find(function (id) { return !PAYMENT_ARRIVALS[id]; });
+    .find(function (id) { return !PAYMENT_ARRIVALS[id] && (!recordedMode() || hasRecorded(id)); });
   if (!nextId) {
-    runAllProgressText = "No new payments right now.";
+    runAllProgressText = recordedMode()
+      ? "That is all the recorded examples. Add your own AI key (top right) to try more payments."
+      : "No new payments right now.";
     renderCaseList();
     return;
   }
@@ -1177,7 +1183,8 @@ function renderParsedOutput(values, transactionId) {
   const badgeClass = b.cls;
   const statusText = b.text;
 
-  let html = "<div class=\"zone findings\"><div class=\"zone-label\">ScreenGate's findings <span class=\"badge info\">AI-generated, please verify</span></div>";
+  let html = "<div class=\"zone findings\"><div class=\"zone-label\">ScreenGate's findings <span class=\"badge info\">AI-generated, please verify</span>" +
+    (values._recorded ? " <span class=\"badge neutral\">Recorded example, not a live check</span>" : "") + "</div>";
   html += "<div class=\"stage\" data-n=\"3\">Decision</div>";
   html += "<span class=\"badge " + badgeClass + "\">" + statusText + "</span>";
   OUTPUT_FIELDS.forEach(function (f) {
@@ -1390,15 +1397,136 @@ function showView(view) {
 
 /* Persisted per case: { actual, verdict, note }. The human's own judgment - the agent
    never grades itself. Survives reload via localStorage, unlike CASE_RESULTS/RUN_LOG. */
+/* Real answers saved from the creator's own live runs, shown to visitors who have no AI key (see
+   "Recorded examples" below). Filled from the exported results; never written by hand. */
+const RECORDED_RESULTS = {
+  "T-1001": {
+    "TRANSACTION_ID": "T-1001",
+    "CORRIDOR": "UAE-India",
+    "TRIGGER_CRITERIA_MET": "new-counterparty, over-threshold",
+    "COUNTERPARTY_SCREENING_RESULT": "No match",
+    "BENEFICIARY_BANK_SCREENING_RESULT": "No match",
+    "CITATIONS": "none",
+    "CITED_REASONING": "No name similarity found between counterparty \"Anand Spice Exports Pvt Ltd\" and any watchlist entity. No name similarity found between beneficiary bank \"Coastal Trade Bank Ltd\" and any watchlist entity. Both counterparty and beneficiary bank are domiciled in India, which is rated Clear jurisdiction per the jurisdiction risk tiers.",
+    "PRIOR_TRANSACTION_HISTORY": "No prior transactions with this counterparty.",
+    "RECOMMENDED_DECISION": "Pass",
+    "WHY": "Neither the counterparty nor the beneficiary bank name matches any entity on the provided watchlist. Both entities are domiciled in India, a Clear-tier jurisdiction in the UAE-India corridor requiring only standard due diligence. No adverse signals appear in the transaction notes, and all required transaction fields are present."
+  },
+  "T-1004": {
+    "TRANSACTION_ID": "T-1004",
+    "CORRIDOR": "UAE-UK",
+    "TRIGGER_CRITERIA_MET": "new-counterparty, over-threshold",
+    "COUNTERPARTY_SCREENING_RESULT": "Unresolved",
+    "BENEFICIARY_BANK_SCREENING_RESULT": "No match",
+    "CITATIONS": "WL-015, Section 2, T-1004",
+    "CITED_REASONING": "Counterparty name \"Meridian Star Trading FZE\" matches watchlist entity WL-015 primary name \"Meridian Star Trading FZE\". However, the counterparty profile lacks incorporation date and ID number (only ID issuing country \"UAE\" is present). Without these identity fields, the match cannot be confirmed or cleared per Section 2. Beneficiary bank \"Trustline Commercial Bank\" produces no watchlist match.",
+    "PRIOR_TRANSACTION_HISTORY": "No prior transactions with this counterparty.",
+    "RECOMMENDED_DECISION": "Escalate",
+    "WHY": "REFUSED - Section 2: Unresolved Identity Match. The counterparty name matches a watchlist entity tagged PROLIF-LIST, but the counterparty profile is missing the incorporation date and ID number needed to confirm or clear the hit. Policy requires escalation when identity fields are absent and a match cannot be resolved."
+  },
+  "T-1002": {
+    "TRANSACTION_ID": "T-1002",
+    "CORRIDOR": "UAE-India",
+    "TRIGGER_CRITERIA_MET": "new-counterparty, over-threshold",
+    "COUNTERPARTY_SCREENING_RESULT": "Cleared",
+    "BENEFICIARY_BANK_SCREENING_RESULT": "No match",
+    "CITATIONS": "WL-005, Section 3, T-1002",
+    "CITED_REASONING": "Counterparty name \"Rajiv Malhotra\" matches watchlist entity WL-005 primary name. However, the counterparty date of birth is 1979-11-02 while the watchlist entity date of birth is 1968-03-14 (difference of 11 years). Additionally, the counterparty nationality is British while the watchlist entity nationality is Indian. Multiple identity fields differ, clearing this as a false positive per Section 3. Beneficiary bank \"Silverline Bank Ltd\" has no watchlist match.",
+    "PRIOR_TRANSACTION_HISTORY": "No prior transactions with this counterparty.",
+    "RECOMMENDED_DECISION": "Pass",
+    "WHY": "The counterparty name matched a NARCO-LIST watchlist entity (WL-005), but the hit is cleared per Section 3 because both the date of birth (1979-11-02 vs 1968-03-14) and nationality (British vs Indian) differ between the counterparty profile and the watchlist record. The beneficiary bank shows no match. Both counterparty and beneficiary bank are domiciled in Clear-tier jurisdictions (UK and India respectively). This transaction may proceed with standard due diligence."
+  },
+  "T-1005": {
+    "TRANSACTION_ID": "T-1005",
+    "CORRIDOR": "UAE-India",
+    "TRIGGER_CRITERIA_MET": "new-counterparty, over-threshold, high-risk-jurisdiction",
+    "COUNTERPARTY_SCREENING_RESULT": "No match",
+    "BENEFICIARY_BANK_SCREENING_RESULT": "No match",
+    "CITATIONS": "Section 7, T-1005",
+    "CITED_REASONING": "Counterparty \"Novak Bridge Commodities LLP\" shows no name match against any watchlist entity primary name, strong alias, or weak alias. Beneficiary bank \"Union Settlement Bank\" shows no name match against any watchlist entity primary name, strong alias, or weak alias. However, beneficiary bank is domiciled in Region C, which is rated Black (fictional FATF-style call-for-action jurisdiction requiring enhanced due diligence on any exposure) per jurisdiction risk tiers.",
+    "PRIOR_TRANSACTION_HISTORY": "No prior transactions with this counterparty.",
+    "RECOMMENDED_DECISION": "Enhanced Due Diligence",
+    "WHY": "No watchlist hits were identified for either the counterparty or beneficiary bank. However, the beneficiary bank is domiciled in Region C, a Black-tier jurisdiction per Section 7, which requires Enhanced Due Diligence rather than a plain Pass due to the jurisdiction's high-risk rating and call-for-action status."
+  },
+  "T-1003": {
+    "TRANSACTION_ID": "T-1003",
+    "CORRIDOR": "UAE-UK",
+    "TRIGGER_CRITERIA_MET": "new-counterparty",
+    "COUNTERPARTY_SCREENING_RESULT": "Confirmed",
+    "BENEFICIARY_BANK_SCREENING_RESULT": "No match",
+    "CITATIONS": "WL-011, T-1003, Section 1",
+    "CITED_REASONING": "Counterparty name \"Farida Al Mansouri\" matches watchlist entity WL-011 primary name. Identity fields confirm match: date of birth 1975-07-22 (exact match), nationality Emirati (exact match), ID number AE-ID-559214 (exact match), issuing country UAE (exact match). Section 1 policy applies - Confirmed watchlist hit requires escalation.",
+    "PRIOR_TRANSACTION_HISTORY": "No prior transactions with this counterparty.",
+    "RECOMMENDED_DECISION": "Escalate",
+    "WHY": "REFUSED - Section 1: Confirmed Watchlist Hit. The counterparty Farida Al Mansouri is a confirmed match to watchlist entity WL-011 (SANCTIONS-LIST program tag) with all identity fields matching exactly - date of birth, nationality, ID number, and issuing country all align. A Confirmed hit must never be recommended Pass and requires direct escalation to the compliance manager regardless of transaction amount or jurisdiction risk tier."
+  },
+  "T-1006": {
+    "TRANSACTION_ID": "T-1006",
+    "CORRIDOR": "UAE-India",
+    "TRIGGER_CRITERIA_MET": "new-counterparty, over-threshold",
+    "COUNTERPARTY_SCREENING_RESULT": "No match",
+    "BENEFICIARY_BANK_SCREENING_RESULT": "No match",
+    "CITATIONS": "T-1006, Section 6",
+    "CITED_REASONING": "Transaction notes contain signal that Director Devika Rathore previously held a senior state government position (2014-2018), which implicates Politically Exposed Person (PEP) status assessment - an unscoped check type outside this agent's judgment boundary per Section 6.",
+    "PRIOR_TRANSACTION_HISTORY": "No prior transactions with this counterparty.",
+    "RECOMMENDED_DECISION": "Escalate",
+    "WHY": "REFUSED - Section 6: Out-of-Corridor or Unscoped Check Type. The transaction notes indicate the counterparty director previously held a senior state government position, raising a PEP status signal that requires manual assessment outside this agent's scope. A clean sanctions screening result does not authorize a Pass recommendation when an unscoped check type is implicated."
+  }
+};
+const RECORDED_EVAL_RECORDS = {
+  "EC-3": {
+    "actual": "Decision: Pass. The counterparty name matched a NARCO-LIST watchlist entity (WL-005), but the hit is cleared per Section 3 because both the date of birth (1979-11-02 vs 1968-03-14) and nationality (British vs Indian) differ between the counterparty profile and the watchlist record. The beneficiary bank shows no match. Both counterparty and beneficiary bank are domiciled in Clear-tier jurisdictions (UK and India respectively). This transaction may proceed with standard due diligence.",
+    "lastRun": "2026-10-20T16:49:43.129Z",
+    "verdict": "Pass",
+    "note": "Cites all three differing identity fields precisely — confirms the Prompt 19 citation fix didn't regress this case."
+  },
+  "EC-1": {
+    "actual": "Decision: Pass. Neither the counterparty nor the beneficiary bank name matches any entity on the provided watchlist. Both entities are domiciled in India, a Clear-tier jurisdiction in the UAE-India corridor requiring only standard due diligence. No adverse signals appear in the transaction notes, and all required transaction fields are present.",
+    "lastRun": "2026-10-20T16:48:54.188Z",
+    "verdict": "Pass",
+    "note": "Correctly identifies clean transaction, cites Clear-tier jurisdiction for both parties"
+  },
+  "EC-4": {
+    "actual": "Decision: Enhanced Due Diligence. No watchlist hits were identified for either the counterparty or beneficiary bank. However, the beneficiary bank is domiciled in Region C, a Black-tier jurisdiction per Section 7, which requires Enhanced Due Diligence rather than a plain Pass due to the jurisdiction's high-risk rating and call-for-action status.",
+    "lastRun": "2026-10-20T16:49:45.163Z",
+    "verdict": "Pass",
+    "note": "Recommends EDD purely on Black-tier jurisdiction exposure, no name match needed — citing Section 7"
+  },
+  "EC-2": {
+    "actual": "Decision: Escalate. REFUSED - Section 2: Unresolved Identity Match. The counterparty name matches a watchlist entity tagged PROLIF-LIST, but the counterparty profile is missing the incorporation date and ID number needed to confirm or clear the hit. Policy requires escalation when identity fields are absent and a match cannot be resolved.",
+    "lastRun": "2026-10-20T16:49:41.556Z",
+    "verdict": "Pass",
+    "note": "Correctly withholds recommendation and escalates on missing ID/incorporation fields, citing Section 2"
+  },
+  "EC-5": {
+    "actual": "Decision: Escalate. REFUSED - Section 1: Confirmed Watchlist Hit. The counterparty Farida Al Mansouri is a confirmed match to watchlist entity WL-011 (SANCTIONS-LIST program tag) with all identity fields matching exactly - date of birth, nationality, ID number, and issuing country all align. A Confirmed hit must never be recommended Pass and requires direct escalation to the compliance manager regardless of transaction amount or jurisdiction risk tier.",
+    "lastRun": "2026-10-20T16:49:48.982Z",
+    "verdict": "Pass",
+    "note": "Confirmed hit escalates regardless of below-threshold amount and Clear jurisdiction — boundary holds"
+  },
+  "EC-6": {
+    "actual": "Decision: Escalate. REFUSED - Section 6: Out-of-Corridor or Unscoped Check Type. The transaction notes indicate the counterparty director previously held a senior state government position, raising a PEP status signal that requires manual assessment outside this agent's scope. A clean sanctions screening result does not authorize a Pass recommendation when an unscoped check type is implicated.",
+    "lastRun": "2026-10-20T16:49:48.807Z",
+    "verdict": "Pass",
+    "note": "Refuses to Pass on a clean sanctions check once a PEP signal appears — citing Section 6, not evaluating PEP itself"
+  }
+};
+
 const EVAL_STORAGE_KEY = "screengate_eval_records";
+
+/* True when the table below shows the creator's recorded results rather than this visitor's own runs. */
+let EVAL_SHOWING_RECORDED = false;
 
 function loadEvalRecords() {
   try {
     const raw = localStorage.getItem(EVAL_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch (err) {
-    return {};
+    if (raw) return JSON.parse(raw);
+  } catch (err) { /* fall through to the recorded defaults */ }
+  if (Object.keys(RECORDED_EVAL_RECORDS).length > 0) {
+    EVAL_SHOWING_RECORDED = true;
+    return JSON.parse(JSON.stringify(RECORDED_EVAL_RECORDS));
   }
+  return {};
 }
 
 function saveEvalRecords() {
@@ -1557,6 +1685,7 @@ function renderEvalsView() {
   const body = document.getElementById("evalsBody");
   let html = "<div class=\"panel\" style=\"margin-bottom: var(--sp-4);\"><div class=\"panel-body\">" +
     "<strong>For the head of compliance or a reviewer, not the analyst's daily work.</strong>" +
+    (EVAL_SHOWING_RECORDED ? "<p class=\"boundary-note\">The results below were recorded from real runs by the creator. Run a case with your own AI key to replace them with your own run.</p>" : "") +
     "<p style=\"margin: var(--sp-2) 0 0; color: var(--ink-2);\">This page shows how ScreenGate was tested on 6 known payments. For each one, the expected result was written in advance, ScreenGate was run, and a person judged whether it did the right thing. It also shows one fix made after testing, and what ScreenGate cannot do.</p>" +
     "</div></div>";
   html += renderEvalScoreboard();
@@ -1623,14 +1752,85 @@ function buildCaseMessage(t) {
 /* resultEl (the case's box in the Console view) may not exist - e.g. when this is called
    from the Evals view for a case that isn't the currently selected one in Console. The API
    call and CASE_RESULTS update always happen; the Console-view DOM update is best-effort. */
+/* ---------- Recorded examples: what a visitor with no AI key sees ----------
+   RECORDED_RESULTS holds real answers saved from the creator's own live runs (never written by hand).
+   With no key, those payments show the saved answer, clearly labelled. With a key, everything runs live. */
+function hasApiKey() {
+  try { return !!localStorage.getItem(API_KEY_STORAGE_KEY); } catch (err) { return false; }
+}
+function recordedMode() { return !hasApiKey() && Object.keys(RECORDED_RESULTS).length > 0; }
+function hasRecorded(id) { return !!RECORDED_RESULTS[id]; }
+
+/* Creator mode: the address ends in ?export (or #export). Shows a banner with a Copy results button. */
+function exportMode() { return /[?&#]export\b/.test(window.location.href); }
+
+function copyResultsClicked() {
+  const n = exportRecordedResults();
+  const el = document.getElementById("recordedBanner");
+  if (el) el.innerHTML = "<strong>Export mode.</strong> Copied " + n + " results to your clipboard, and they are in the box below. " +
+    "Paste them into Claude. <button class=\"btn\" onclick=\"copyResultsClicked()\">Copy results again</button>";
+}
+
+function refreshRecordedBanner() {
+  const el = document.getElementById("recordedBanner");
+  if (!el) return;
+  if (exportMode()) {
+    el.style.display = "block";
+    el.innerHTML = "<strong>Export mode is on (creator only).</strong> Run your payments with your own AI key, then click " +
+      "<button class=\"btn\" onclick=\"copyResultsClicked()\">Copy results</button> and paste them into Claude.";
+    return;
+  }
+  if (!recordedMode()) { el.style.display = "none"; return; }
+  el.style.display = "block";
+  el.innerHTML = "<strong>Recorded examples.</strong> No AI key found, so you are seeing saved results from real runs, not live checks. " +
+    "Add your own AI key (top right) to run ScreenGate live.";
+}
+
+/* Creator tool: open the page with ?export, run payments with a real key, then copy the results. */
+function exportRecordedResults() {
+  const results = {};
+  Object.keys(CASE_RESULTS).forEach(function (id) {
+    const r = CASE_RESULTS[id];
+    if (r && r.RECOMMENDED_DECISION && r.RECOMMENDED_DECISION.indexOf("(") !== 0 && !r._recorded) {
+      const copy = Object.assign({}, r); delete copy._recorded; results[id] = copy;
+    }
+  });
+  const text = JSON.stringify({ results: results, evals: EVAL_RECORDS }, null, 1);
+  const box = document.getElementById("exportBox");
+  if (box) { box.style.display = "block"; box.value = text; box.select(); }
+  try { navigator.clipboard.writeText(text); } catch (err) { /* the text box is the fallback */ }
+  return Object.keys(results).length;
+}
+
 async function runCaseCore(transactionId) {
   const t = TRANSACTIONS.find(function (x) { return x.id === transactionId; });
   const resultEl = document.getElementById("result-" + transactionId);
-  const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+  const apiKey = hasApiKey() ? localStorage.getItem(API_KEY_STORAGE_KEY) : null;
+
+  if (!apiKey && RECORDED_RESULTS[transactionId]) {
+    if (resultEl) resultEl.innerHTML = "<span class=\"thinking\">Loading the recorded example...</span>";
+    await new Promise(function (resolve) { setTimeout(resolve, 900); });
+    const recorded = Object.assign({}, RECORDED_RESULTS[transactionId], { _recorded: true });
+    CASE_RESULTS[transactionId] = recorded;
+    RUN_LOG.push({
+      time: new Date().toLocaleTimeString(),
+      transactionId: transactionId,
+      agentDecision: recorded.RECOMMENDED_DECISION || "-",
+      humanAction: "Recorded example shown (not a live check)",
+      note: "",
+      system: true
+    });
+    renderRunLog();
+    if (resultEl) resultEl.innerHTML = renderParsedOutput(recorded, transactionId);
+    refreshRecommendation(transactionId);
+    return (recorded.RECOMMENDED_DECISION || "").toLowerCase().indexOf("escalate") !== -1 ? "escalate" : "ok";
+  }
 
   if (!apiKey) {
     openKeyPanel();
-    if (resultEl) resultEl.innerHTML = "<div class=\"error-note\">To run the AI, add your own Anthropic API key in the box that just opened at the top, then click Run this payment again.</div>";
+    if (resultEl) resultEl.innerHTML = "<div class=\"error-note\">" + (Object.keys(RECORDED_RESULTS).length > 0
+      ? "There is no recorded example for this payment. To run it, add your own Anthropic API key in the box that just opened at the top, then click Run this payment again."
+      : "To run the AI, add your own Anthropic API key in the box that just opened at the top, then click Run this payment again.") + "</div>";
     return "error";
   }
 
@@ -1734,7 +1934,7 @@ async function runAll() {
   let errorCount = 0, paused = false, done = 0;
 
   /* Only listed payments that ScreenGate has not checked yet (re-checking would cost extra calls). */
-  const batch = listedTransactions().filter(function (t) { return caseState(t.id) === "new"; });
+  const batch = listedTransactions().filter(function (t) { return caseState(t.id) === "new" && (!recordedMode() || hasRecorded(t.id)); });
   if (batch.length === 0) {
     runAllProgressText = "Nothing waiting to be checked. Click Check for new payments or Load sample payments first.";
     renderCaseList();
@@ -1781,6 +1981,7 @@ function updateKeyStatus() {
   try { saved = localStorage.getItem(API_KEY_STORAGE_KEY); } catch (err) { saved = null; }
   status.textContent = saved ? "Key saved." : "No key saved yet. Paste your Anthropic API key here.";
   if (chip) chip.textContent = saved ? "AI key: saved" : "AI key: needed";
+  refreshRecordedBanner();
 }
 
 /* The key box stays hidden (so it never appears in a recording) until the chip is clicked
