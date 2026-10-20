@@ -625,7 +625,8 @@ let samplesLoaded = false;
 const OPENED_EXAMPLES = {};
 
 function isListed(id) {
-  return samplesLoaded || !!PAYMENT_ARRIVALS[id] || !!OPENED_EXAMPLES[id];
+  /* With no AI key, "Load sample payments" lists only the payments that have a saved real answer. */
+  return (samplesLoaded && (!recordedMode() || hasRecorded(id))) || !!PAYMENT_ARRIVALS[id] || !!OPENED_EXAMPLES[id];
 }
 
 function listedTransactions() {
@@ -1783,7 +1784,8 @@ function refreshRecordedBanner() {
   if (!recordedMode()) { el.style.display = "none"; return; }
   el.style.display = "block";
   el.innerHTML = "<strong>Recorded examples.</strong> No AI key found, so you are seeing saved results from real runs, not live checks. " +
-    "Add your own AI key (top right) to run ScreenGate live.";
+    "Try it: click <strong>Check for new payments</strong> (or <strong>Load sample payments</strong>), open a payment, then Approve or Escalate it. " +
+    "Add your own AI key (top right) to run ScreenGate live on any payment.";
 }
 
 /* Creator tool: open the page with ?export, run payments with a real key, then copy the results. */
