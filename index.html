@@ -1519,10 +1519,12 @@ const EVAL_STORAGE_KEY = "screengate_eval_records";
 let EVAL_SHOWING_RECORDED = false;
 
 function loadEvalRecords() {
-  try {
-    const raw = localStorage.getItem(EVAL_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (err) { /* fall through to the recorded defaults */ }
+  if (!forcedRecorded()) {
+    try {
+      const raw = localStorage.getItem(EVAL_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (err) { /* fall through to the recorded defaults */ }
+  }
   if (Object.keys(RECORDED_EVAL_RECORDS).length > 0) {
     EVAL_SHOWING_RECORDED = true;
     return JSON.parse(JSON.stringify(RECORDED_EVAL_RECORDS));
@@ -1531,6 +1533,7 @@ function loadEvalRecords() {
 }
 
 function saveEvalRecords() {
+  if (forcedRecorded()) return;   /* the recorded view never overwrites this browser's own saved test runs */
   try {
     localStorage.setItem(EVAL_STORAGE_KEY, JSON.stringify(EVAL_RECORDS));
   } catch (err) {
@@ -1756,7 +1759,12 @@ function buildCaseMessage(t) {
 /* ---------- Recorded examples: what a visitor with no AI key sees ----------
    RECORDED_RESULTS holds real answers saved from the creator's own live runs (never written by hand).
    With no key, those payments show the saved answer, clearly labelled. With a key, everything runs live. */
+/* The recorded-examples link (.../recorded-examples/ or ?recorded) always shows the recorded view,
+   even if this browser has an AI key saved. The saved key is simply not used there. */
+function forcedRecorded() { return /[?&#]recorded\b/.test(window.location.href); }
+
 function hasApiKey() {
+  if (forcedRecorded()) return false;
   try { return !!localStorage.getItem(API_KEY_STORAGE_KEY); } catch (err) { return false; }
 }
 function recordedMode() { return !hasApiKey() && Object.keys(RECORDED_RESULTS).length > 0; }
@@ -1785,7 +1793,9 @@ function refreshRecordedBanner() {
   el.style.display = "block";
   el.innerHTML = "<strong>Recorded examples.</strong> No AI key found, so you are seeing saved results from real runs, not live checks. " +
     "Try it: click <strong>Check for new payments</strong> (or <strong>Load sample payments</strong>), open a payment, then Approve or Escalate it. " +
-    "Add your own AI key (top right) to run ScreenGate live on any payment.";
+    (forcedRecorded()
+      ? "To run ScreenGate live on any payment with your own AI key, <a href=\"./\" style=\"color: var(--accent);\">open the normal link</a>."
+      : "Add your own AI key (top right) to run ScreenGate live on any payment.");
 }
 
 /* Creator tool: open the page with ?export, run payments with a real key, then copy the results. */
@@ -1979,6 +1989,12 @@ async function runAll() {
 function updateKeyStatus() {
   const status = document.getElementById("keyStatus");
   const chip = document.getElementById("keyChip");
+  if (forcedRecorded()) {
+    status.textContent = "Recorded examples view: a saved key is not used here. Open the normal link to run live.";
+    if (chip) chip.textContent = "Recorded examples view";
+    refreshRecordedBanner();
+    return;
+  }
   let saved = null;
   try { saved = localStorage.getItem(API_KEY_STORAGE_KEY); } catch (err) { saved = null; }
   status.textContent = saved ? "Key saved." : "No key saved yet. Paste your Anthropic API key here.";
