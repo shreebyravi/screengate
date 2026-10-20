@@ -1241,6 +1241,12 @@ function renderGate(id) {
     "<button class=\"btn danger\" onclick=\"escalateCase('" + id + "')\">Escalate</button>" +
     "<span id=\"gateStatus-" + id + "\" style=\"font-size: var(--fs-0); color: var(--ink-3);\"></span>" +
     "</div>" +
+    "<div id=\"escalateArea-" + id + "\" style=\"display:none; margin-top: var(--sp-3);\">" +
+    "<label for=\"escalateText-" + id + "\" style=\"font-size: var(--fs-0); color: var(--ink-2);\">One-line reason for escalating this payment to the compliance officer</label><br>" +
+    "<input type=\"text\" id=\"escalateText-" + id + "\" placeholder=\"For example: Confirmed sanctions match\" style=\"width:100%; margin-top: var(--sp-1); font-family: var(--font-body); font-size: var(--fs-1); background: var(--bg-inset); color: var(--ink); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); padding: var(--sp-2);\" onkeydown=\"if (event.key === 'Enter') confirmEscalate('" + id + "')\"><br>" +
+    "<button class=\"btn danger\" style=\"margin-top: var(--sp-2);\" onclick=\"confirmEscalate('" + id + "')\">Send to compliance officer</button> " +
+    "<button class=\"btn\" style=\"margin-top: var(--sp-2);\" onclick=\"cancelEscalate('" + id + "')\">Cancel</button>" +
+    "</div>" +
     "<div id=\"editArea-" + id + "\" style=\"display:none; margin-top: var(--sp-3);\">" +
     "<textarea id=\"editText-" + id + "\" rows=\"3\" style=\"width:100%; font-family: var(--font-body); font-size: var(--fs-1); background: var(--bg-inset); color: var(--ink); border: var(--border-w) solid var(--line); border-radius: var(--radius-sm); padding: var(--sp-2);\"></textarea><br>" +
     "<button class=\"btn primary\" style=\"margin-top: var(--sp-2);\" onclick=\"saveEdit('" + id + "')\">Save edit</button>" +
@@ -1283,10 +1289,27 @@ function approveCase(id) {
   logRun(id, "Approved", "");
 }
 
+/* Escalate asks for its one-line reason in a box on the page (not a browser pop-up, which can be
+   blocked or missed), then sends on the button click. */
 function escalateCase(id) {
-  const reason = prompt("One-line reason for escalating this payment to the compliance officer:");
-  if (reason === null) return;
+  const area = document.getElementById("escalateArea-" + id);
+  if (!area) return;
+  area.style.display = "block";
+  const input = document.getElementById("escalateText-" + id);
+  if (input) input.focus();
+}
+
+function confirmEscalate(id) {
+  const input = document.getElementById("escalateText-" + id);
+  const reason = input ? input.value.trim() : "";
+  const area = document.getElementById("escalateArea-" + id);
+  if (area) area.style.display = "none";
   logRun(id, "Escalated", reason);
+}
+
+function cancelEscalate(id) {
+  const area = document.getElementById("escalateArea-" + id);
+  if (area) area.style.display = "none";
 }
 
 function startEdit(id) {
