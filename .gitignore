@@ -1,0 +1,5 @@
+# screen recordings stay local
+*.mp4
+*.mov
+*.webm
+Recording*
