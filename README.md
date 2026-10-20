@@ -64,7 +64,9 @@ Licensed under [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4
 
 Live demo: https://shreebyravi.github.io/screengate/
 
-**No AI key? You can still click through it.** Without a key, the demo shows **recorded examples**: real answers saved from the creator's own runs of the six test payments, clearly labelled "Recorded example, not a live check". Click "Check for new payments" to see the payments arrive, open one, and try Approve or Escalate.
+**No AI key? You can still click through it:** https://shreebyravi.github.io/screengate/recorded-examples/
+
+That link always shows **recorded examples**: real answers saved from the creator's own runs of the six test payments, clearly labelled "Recorded example, not a live check". Click "Check for new payments" to see the payments arrive, open one, and try Approve or Escalate.
 
 **Want to run it live?** Click the "AI key" button and paste your own Anthropic API key. The key stays in your browser and is never stored in this repository or sent to this website. A run costs a few cents on your own account.
 
