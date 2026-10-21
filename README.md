@@ -12,7 +12,7 @@ A prototype designed to be used under human review. All data is synthetic: fabri
 
 **The problem.** A company that sends money abroad must not pay a sanctioned party. The cost of getting it wrong is fines, legal trouble and losses. In practice the company's payment system flags some payments, and an analyst checks the receiver by hand: slow, and uneven when the team is busy.
 
-**Who it is for.** Compliance analysts at a payments company, and the compliance officer who takes the escalations.
+**Who it is for.** Compliance analysts at a payments company, and the compliance officer who takes the escalations. The full breakdown of user segments, what each needs and worries about, and what is still an assumption is in [docs/users-and-problem.md](docs/users-and-problem.md).
 
 **What ScreenGate does.** For each flagged payment it checks the receiver and the receiver's bank against the sanctions list, country risk and policy, then recommends Looks clear, Extra checks needed, or Cannot clear: escalate, with cited evidence. A person decides.
 
@@ -31,6 +31,17 @@ A prototype designed to be used under human review. All data is synthetic: fabri
 **Known limits.** Name matching relies on the AI's own judgment and was tested on six cases plus one hard case. English names only. Decisions are not saved after a page reload.
 
 **What is next.** Customer-set payment ceilings by risk level, a second approver for very large payments, a sortable and filterable queue, and in-product feedback.
+
+## Product documentation
+
+The full documentation is in the [`docs/`](docs/) folder:
+
+- [Users and problem](docs/users-and-problem.md): who it is for and what is still an assumption
+- [Product specification](docs/product-spec.md): scope, flow, rules, what the screen shows
+- [Metrics](docs/metrics.md): north star metric and guardrails
+- [Pilot plan](docs/pilot-plan.md): roles, success bars, rollback
+- [Decisions and testing](docs/decisions-and-testing.md): key decisions, the six tests, the improvement
+- [Risks and privacy](docs/risks-and-privacy.md)
 
 ## Product FAQ
 
