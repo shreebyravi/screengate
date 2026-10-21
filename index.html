@@ -1640,7 +1640,8 @@ function loadLimitations() {
     "Requires data in this prototype's exact format - the embedded watchlist, counterparty profiles, and transaction records. It cannot ingest a differently structured feed or a free-text case description without rebuilding the data layer.",
     "English-only. The watchlist, policy text, and agent reasoning have not been tested against non-English names, aliases, or transliteration variants, which is a real challenge in cross-border sanctions screening.",
     "Name matching relies entirely on the model's own judgment - no dedicated fuzzy-matching algorithm, no confidence score, and no testing against a large set of tricky name variations beyond the 6 test cases and one extra hard test built here.",
-    "The payment list can be filtered by status (waiting, approved, escalated) but not sorted by risk or arrival time, and there is no summary table across payments. A sortable, filterable summary view is the natural next step for a team handling many flagged payments a day. It is future work, not part of this prototype."
+    "The payment list can be filtered by status (waiting, approved, escalated) but not sorted by risk or arrival time, and there is no summary table across payments. A sortable, filterable summary view is the natural next step for a team handling many flagged payments a day. It is future work, not part of this prototype.",
+    "ScreenGate uses the watchlist it is given. If that list is incomplete, ScreenGate has the same gap, so list coverage is outside its scope. It also does not replace customer due diligence, transaction monitoring or regulatory reporting."
   ].join("\n");
 }
 
