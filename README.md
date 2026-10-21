@@ -38,10 +38,9 @@ The full documentation is in the [`docs/`](docs/) folder:
 
 - [Users and problem](docs/users-and-problem.md): who it is for and what is still an assumption
 - [Product specification](docs/product-spec.md): scope, flow, rules, what the screen shows
-- [Metrics](docs/metrics.md): north star metric and guardrails
-- [Pilot plan](docs/pilot-plan.md): roles, success bars, rollback
-- [Decisions and testing](docs/decisions-and-testing.md): key decisions, the six tests, the improvement
-- [Risks and privacy](docs/risks-and-privacy.md)
+- [Metrics and pilot plan](docs/metrics-and-pilot.md): north star metric, guardrails, roles, rollback
+- [Decisions, testing and risks](docs/decisions-testing-and-risks.md): key decisions, the six tests, risks, privacy
+
 
 ## Product FAQ
 
