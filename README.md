@@ -48,7 +48,9 @@ A prototype designed to be used under human review. All data is synthetic: fabri
 
 **What is the riskiest assumption?** That analysts will trust ScreenGate's reasons enough to use them. The pilot measures it directly: how often recommendations are accepted unchanged, and whether both analysts want to keep it.
 
-**What does it cost when screening goes wrong?** Regulators in both corridors have acted. In the UK, the FCA fined Starling Bank about £29 million in 2024 after its sanctions screening checked customers against only part of the list, and the UK sanctions office can fine up to the greater of £1 million or 50% of the breach value. In the UAE, the Central Bank fined an exchange house AED 200 million in 2025 over weak anti-money-laundering controls. These are examples, not legal advice.
+**What does it cost when screening goes wrong?** Regulators in both corridors have acted. In the UK, the FCA fined Starling Bank about £29 million in 2024 after its sanctions screening checked customers against only part of the list, and the UK sanctions office can fine up to the greater of £1 million or 50% of the breach value. In the UAE, the Central Bank fined an exchange house AED 200 million in 2025 over weak anti-money-laundering controls. These are examples of what weak screening controls can cost, not legal advice, and ScreenGate would not have prevented them on its own. Starling's problem was incomplete list coverage and the UAE case was a broad control failure; ScreenGate covers one step, reviewing flagged payments consistently and with evidence.
+
+**What is outside ScreenGate's scope?** It uses the watchlist it is given. If that list is incomplete, ScreenGate has the same gap. It also does not replace customer due diligence, transaction monitoring or regulatory reporting.
 
 **How would it pay for itself?** Through analyst time per payment, measured in the pilot against a baseline taken before it starts. The target is at least 40% faster. There is no pricing claim in this prototype.
 
