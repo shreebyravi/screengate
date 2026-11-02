@@ -1,4 +1,6 @@
-# Users and problem
+# ScreenGate: Discovery
+
+Users, the problem and what is still an assumption. See [MARKET_SCAN.md](MARKET_SCAN.md) for existing products.
 
 ## The problem, in one paragraph
 When a company sends money across borders, its payment system flags some payments for a sanctions check: a new receiver, a large amount, or a high-risk country. A person then has to decide whether the payment can go ahead. Today that means comparing the receiver and their bank against watchlists, reading their profile, checking country risk and applying company policy, one payment at a time. That is slow, it varies from person to person when the team is busy, and the reasoning is hard to show afterwards. Getting it wrong has a real cost: regulators fine firms whose screening controls fail.

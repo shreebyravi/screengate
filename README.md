@@ -1,6 +1,12 @@
 # ScreenGate
 
+**A faster first pass on flagged cross-border payments, with the evidence written down and a person making every decision.**
+
 An AML sanctions-screening copilot prototype for cross-border B2B payments on the UAE-India and UAE-UK corridors. A Screening Agent recommends Pass, Enhanced Due Diligence, or Escalate with cited reasoning, and a compliance analyst makes the final decision.
+
+**[Try it, no key needed](https://shreebyravi.github.io/screengate/recorded-examples/)** | **[One-page summary](docs/PITCH.md)** | **Status:** prototype with synthetic data
+
+![ScreenGate payment queue](docs/images/queue.jpg)
 
 **Created by Shree Byravi.** Product design, evaluation, and the launch plan are Shree Byravi's work. The prototype was built with an AI coding assistant, working from those decisions.
 
@@ -12,7 +18,7 @@ A prototype designed to be used under human review. All data is synthetic: fabri
 
 **The problem.** A company that sends money abroad must not pay a sanctioned party. The cost of getting it wrong is fines, legal trouble and losses. In practice the company's payment system flags some payments, and an analyst checks the receiver by hand: slow, and uneven when the team is busy.
 
-**Who it is for.** Compliance analysts at a payments company, and the compliance officer who takes the escalations. The full breakdown of user segments, what each needs and worries about, and what is still an assumption is in [docs/users-and-problem.md](docs/users-and-problem.md).
+**Who it is for.** Compliance analysts at a payments company, and the compliance officer who takes the escalations. The full breakdown of user segments, what each needs and worries about, and what is still an assumption is in [docs/DISCOVERY.md](docs/DISCOVERY.md).
 
 **What ScreenGate does.** For each flagged payment it checks the receiver and the receiver's bank against the sanctions list, country risk and policy, then recommends Looks clear, Extra checks needed, or Cannot clear: escalate, with cited evidence. A person decides.
 
@@ -28,25 +34,33 @@ A prototype designed to be used under human review. All data is synthetic: fabri
 
 **Launch plan.** Conditional go: a 6-week pilot with 2 compliance analysts and about 180 flagged payments, running alongside the current process with every recommendation reviewed. Success bars: at least 80% of recommendations accepted and zero missed escalations. Named owners, a written rollback, and a formal privacy and legal review first.
 
-**Known limits.** Name matching relies on the AI's own judgment and was tested on six cases plus one hard case. English names only. Decisions are not saved after a page reload.
+**Stress tests.** Six harder cases, including a trick instruction and a fake clearance claim, each ran three times. All escalated as expected, but one exposed a loose policy rule. See [the results](docs/EVALS.md).
+
+**Known limits.** Name matching relies on the AI's own judgment and was tested on only a small set of cases. English names only. Decisions are not saved after a page reload.
 
 **What is next.** Customer-set payment ceilings by risk level, a second approver for very large payments, a sortable and filterable queue, and in-product feedback.
 
 ## Product documentation
 
-The full documentation is in the [`docs/`](docs/) folder:
+See the [documents map](docs/README.md) for the PRD, discovery, market scan, design, architecture, agent instructions, data guide, decisions, evals, risks, pilot plan and roadmap.
 
-- [Users and problem](docs/users-and-problem.md): who it is for and what is still an assumption
-- [Product specification](docs/product-spec.md): scope, flow, rules, what the screen shows
-- [Metrics and pilot plan](docs/metrics-and-pilot.md): north star metric, guardrails, roles, rollback
-- [Decisions, testing and risks](docs/decisions-testing-and-risks.md): key decisions, the six tests, risks, privacy
+[AI product decisions](docs/AI_PRODUCT_DECISIONS.md) covers how AI changes product work, the choices and trade-offs made here, what a real implementation would add, and my role. A short version is in the app's **How well it works** tab.
+
+| Path | Contents |
+|---|---|
+| `index.html` | The whole app, in one file |
+| `recorded-examples/` | A link that always opens the recorded view |
+| [`docs/`](docs/README.md) | Product documents |
+| `data/` | Synthetic payments, profiles, watchlist and test cases |
+| `policies/` | Fictional escalation policy and audit template |
+| `design/` | Notes on the look and feel |
 
 
 ## Product FAQ
 
 **Why AI and not simple matching rules?** Rules are good at finding a possible match. They are weak at the judgment that follows: is this the same person or just the same name? ScreenGate adds that judgment and writes down its reasons, using the fields that actually matched (date of birth, nationality, ID). A person still decides.
 
-**How is this different from existing screening tools?** Screening tools raise the alert. ScreenGate sits after the alert and helps the analyst clear it consistently and quickly. It does not replace the screening tool or the payment system.
+**How is this different from existing screening tools?** Traditional screening raises the alert, and ScreenGate sits after it. This isn't a new idea, though: vendors already describe AI for reviewing sanctions alerts, as the [market scan](docs/MARKET_SCAN.md) sets out. ScreenGate is a portfolio prototype showing how to scope, test and safely pilot this step. It does not replace the screening tool or the payment system.
 
 **Who is the user?** The compliance analyst who reviews flagged payments, and the compliance officer who takes the escalations.
 
@@ -70,7 +84,9 @@ The full documentation is in the [`docs/`](docs/) folder:
 
 ## License
 
-Licensed under [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/). Credit Shree Byravi, no commercial use, no derivatives.
+Licensed under [CC BY-NC-ND 4.0](LICENSE). Credit Shree Byravi, no commercial use, no derivatives.
+
+**Want to talk about it?** [Connect with Shree Byravi on LinkedIn](https://www.linkedin.com/in/shree-byravi/). See also [SpaceBack](https://github.com/shreebyravi/spaceback), an air cargo space recovery prototype.
 
 ## Running it
 

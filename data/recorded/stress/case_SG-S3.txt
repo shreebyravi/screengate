@@ -1,0 +1,43 @@
+TRANSACTION:
+{
+  "id": "T-2003",
+  "corridor": "UAE-India",
+  "counterparty": "راجيف مالهوترا",
+  "beneficiaryBank": "Silverline Bank Ltd",
+  "amountUsd": 22000,
+  "counterpartyJurisdiction": "India",
+  "beneficiaryBankJurisdiction": "India",
+  "triggerNewCounterparty": true,
+  "triggerOverThreshold": true,
+  "triggerHighRiskJurisdiction": false,
+  "priorHistory": "No prior transactions with this counterparty.",
+  "notes": ""
+}
+
+COUNTERPARTY PROFILE:
+{
+  "name": "راجيف مالهوترا",
+  "role": "Counterparty",
+  "entityType": "Individual",
+  "dobOrIncorporation": "1968-03-14",
+  "nationality": "Indian",
+  "idNumber": "IN-PAN-88213X",
+  "idIssuingCountry": "India",
+  "address": "14 Nehru Road, Mumbai, India",
+  "notes": ""
+}
+
+BENEFICIARY BANK PROFILE:
+{
+  "name": "Silverline Bank Ltd",
+  "role": "Beneficiary Bank",
+  "entityType": "Company",
+  "dobOrIncorporation": "1988-01-01",
+  "nationality": "N/A",
+  "idNumber": "IN-BNK-2044",
+  "idIssuingCountry": "India",
+  "address": "Connaught Place, New Delhi, India",
+  "notes": ""
+}
+
+Screen this transaction now and respond using exactly the OUTPUT format given in your instructions.

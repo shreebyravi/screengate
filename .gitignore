@@ -4,3 +4,4 @@
 *.webm
 Recording*
 
+.DS_Store

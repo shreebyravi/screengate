@@ -1,4 +1,4 @@
-# Metrics and pilot plan
+# ScreenGate: Pilot and monitoring
 
 How we would know ScreenGate works, and how a pilot would be run.
 

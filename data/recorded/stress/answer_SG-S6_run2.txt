@@ -1,0 +1,10 @@
+TRANSACTION_ID: T-2006
+CORRIDOR: UAE-UK
+TRIGGER_CRITERIA_MET: new-counterparty
+COUNTERPARTY_SCREENING_RESULT: Cleared
+BENEFICIARY_BANK_SCREENING_RESULT: No match
+CITATIONS: T-2006, WL-011, Section 3
+CITED_REASONING: The counterparty name "Farida Al Mansouri" (ignoring the trailing space) equals the primary name of WL-011. The nationality field differs: profile says British, WL-011 says Emirati. However, dobOrIncorporation (1975-07-22) and idNumber (AE-ID-559214) both match WL-011 exactly. The beneficiary bank "Union Gulf Bank" does not resemble any watchlist entity.
+PRIOR_TRANSACTION_HISTORY: No prior transactions with this counterparty.
+RECOMMENDED_DECISION: Escalate
+WHY: REFUSED - Section 3: Cleared Hit (technically cleared on nationality only). Nationality differs, which formally meets the Section 3 test, but the exact date of birth and ID number match means I am not confident the hit is genuinely cleared, so under my escalation rule (when in doubt, escalate) a human must review rather than Pass.
