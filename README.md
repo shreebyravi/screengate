@@ -42,7 +42,7 @@ A prototype designed to be used under human review. All data is synthetic: fabri
 
 ## Product documentation
 
-See the [documents map](docs/README.md) for the PRD, discovery, market scan, design, architecture, agent instructions, data guide, decisions, evals, risks, launch plan and roadmap.
+Start with the [case study](docs/CASE_STUDY.md). See the [documents map](docs/README.md) for the PRD, break-even model, backlog, discovery, market scan, design, architecture, agent instructions, data guide, decisions, evals, risks, launch plan and roadmap.
 
 [AI product decisions](docs/AI_PRODUCT_DECISIONS.md) covers how AI changes product work, the choices and trade-offs made here, what a real implementation would add, and my role. A short version is in the app's **How well it works** tab.
 
