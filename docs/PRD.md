@@ -91,4 +91,4 @@ Six tests were written before they were run, and each result was judged by a per
 
 ## Rollout
 
-A conditional go for a small pilot, only after a privacy and legal review and a measured baseline. See [PILOT_AND_MONITORING.md](PILOT_AND_MONITORING.md) and [ROADMAP.md](ROADMAP.md).
+A conditional go for a small pilot, only after a privacy and legal review and a measured baseline. See [LAUNCH_PLAN.md](LAUNCH_PLAN.md) and [ROADMAP.md](ROADMAP.md).

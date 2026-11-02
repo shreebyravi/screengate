@@ -32,7 +32,7 @@ A prototype designed to be used under human review. All data is synthetic: fabri
 
 **What I changed after testing.** On a deliberately hard case (T-1016) ScreenGate escalated correctly, but its citation named an alias that was not in the payment data. I tightened the instructions so it cites only the field that matched, and re-tested.
 
-**Launch plan.** Conditional go: a 6-week pilot with 2 compliance analysts and about 180 flagged payments, running alongside the current process with every recommendation reviewed. Success bars: at least 80% of recommendations accepted and zero missed escalations. Named owners, a written rollback, and a formal privacy and legal review first.
+**Launch plan.** See the [full plan](docs/LAUNCH_PLAN.md), with requirements, owners and post-launch metrics. Conditional go: a 6-week pilot with 2 compliance analysts and about 180 flagged payments, running alongside the current process with every recommendation reviewed. Success bars: at least 80% of recommendations accepted and zero missed escalations. Named owners, a written rollback, and a formal privacy and legal review first.
 
 **Stress tests.** Six harder cases, including a trick instruction and a fake clearance claim, each ran three times. All escalated as expected, but one exposed a loose policy rule. See [the results](docs/EVALS.md).
 
@@ -42,7 +42,7 @@ A prototype designed to be used under human review. All data is synthetic: fabri
 
 ## Product documentation
 
-See the [documents map](docs/README.md) for the PRD, discovery, market scan, design, architecture, agent instructions, data guide, decisions, evals, risks, pilot plan and roadmap.
+See the [documents map](docs/README.md) for the PRD, discovery, market scan, design, architecture, agent instructions, data guide, decisions, evals, risks, launch plan and roadmap.
 
 [AI product decisions](docs/AI_PRODUCT_DECISIONS.md) covers how AI changes product work, the choices and trade-offs made here, what a real implementation would add, and my role. A short version is in the app's **How well it works** tab.
 
