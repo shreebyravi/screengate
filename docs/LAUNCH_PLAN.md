@@ -90,6 +90,22 @@ Every role has a named backup.
 - **Projected target:** at least 40% lower than the measured baseline.
 - **Why this one:** it's the promised value, and it counts only if the quality guardrails hold.
 
+### Review funnel
+
+The funnel shows where the process breaks down.
+
+| Stage | Metric | What it tells you |
+|---|---|---|
+| **1. Flagged** | Payments flagged by the payment system | Volume reaching ScreenGate |
+| **2. Reviewed** | Payments with a recommendation and a person's decision | Whether the flow is completed |
+| **3. Accepted or edited** | Recommendations accepted or changed | How useful the recommendations are |
+| **4. Escalated** | Payments sent to the compliance officer | Workload for escalation owners |
+| **5. Sampled as correct** | Decisions confirmed correct in weekly review | Whether speed is hurting quality |
+
+### Business result
+
+**Is the value greater than the cost?** Compare measured time saved and quality with the total running cost. See the [business case model](BUSINESS_CASE.md).
+
 ### Value and adoption metrics
 
 | Metric | How it's calculated | Check | Proposed target |
@@ -119,9 +135,9 @@ Every role has a named backup.
 | AI error rate | Daily | Set before the pilot |
 | Cost per payment | Weekly | Clearly below the value of analyst time saved |
 
-### Hard limits
+### Guardrails
 
-Any breach pauses the pilot immediately.
+**Hard limits:** any breach pauses the pilot immediately.
 
 | Must always be zero | Why |
 |---|---|
@@ -130,7 +146,7 @@ Any breach pauses the pilot immediately.
 | **Real personal data before the privacy and legal review** | Regulatory risk |
 | **Unapproved change to instructions, policy or scope** | Decisions must stay controlled |
 
-### Other guardrails
+**Warning guardrails:**
 
 | Guardrail | Threshold | If breached |
 |---|---|---|

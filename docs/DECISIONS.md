@@ -25,3 +25,4 @@ Key product decisions and why they were made. Dates are approximate. A later dec
 | 19 | Nov 2026 | Publish the stress tests and the SG-S6 weakness, and leave the policy unchanged for now | Readers should see the limit, and the app's recorded answers came from real runs under this wording | Hide it, or change the policy without re-running the real tests |
 | 20 | Nov 2026 | Replace the pilot document with a fuller launch plan | A team needs stage gates, requirements, owners and post-launch metrics in one place | Keep a shorter pilot note |
 | 21 | Nov 2026 | Publish a break-even model, not an ROI claim | There are no real inputs, so any ROI would be invented | Show a headline ROI |
+| 22 | Nov 2026 | Add a review funnel and an explicit value-against-cost check | Shows where the process breaks and keeps time saved as the north star | Report time saved alone |
