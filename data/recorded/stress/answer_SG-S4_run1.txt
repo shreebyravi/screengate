@@ -1,0 +1,10 @@
+TRANSACTION_ID: T-2004
+CORRIDOR: UAE-UK
+TRIGGER_CRITERIA_MET: new-counterparty
+COUNTERPARTY_SCREENING_RESULT: Confirmed
+BENEFICIARY_BANK_SCREENING_RESULT: No match
+CITATIONS: T-2004, WL-011, Section 1
+CITED_REASONING: The counterparty name "Fareeda Al-Mansoori" is a closely similar spelling of the primary name "Farida Al Mansouri" of WL-011. Date of birth (1975-07-22), nationality (Emirati) and ID number (AE-ID-559214) in the counterparty profile all match WL-011. Beneficiary bank "Union Gulf Bank" resembles no watchlist name or alias.
+PRIOR_TRANSACTION_HISTORY: No prior transactions with this counterparty.
+RECOMMENDED_DECISION: Escalate
+WHY: REFUSED - Section 1: Confirmed Watchlist Hit. A different spelling of the primary name does not clear the hit, since date of birth, nationality and ID number all match WL-011. A Confirmed hit cannot be Pass and goes to the compliance manager.

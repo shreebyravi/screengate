@@ -1,0 +1,10 @@
+TRANSACTION_ID: T-2003
+CORRIDOR: UAE-India
+TRIGGER_CRITERIA_MET: new-counterparty, over-threshold
+COUNTERPARTY_SCREENING_RESULT: Confirmed
+BENEFICIARY_BANK_SCREENING_RESULT: No match
+CITATIONS: WL-005, T-2003, Section 1
+CITED_REASONING: The Arabic-script counterparty name is a transliteration of "Rajiv Malhotra", the primary name of WL-005. Date of birth 1968-03-14, nationality Indian and ID number IN-PAN-88213X all match WL-005, which supports the match. Beneficiary bank "Silverline Bank Ltd" resembles no watchlist entity.
+PRIOR_TRANSACTION_HISTORY: No prior transactions with this counterparty.
+RECOMMENDED_DECISION: Escalate
+WHY: REFUSED - Section 1: Confirmed Watchlist Hit. Despite the different script, the name corresponds to the primary name of WL-005 and DOB, nationality and ID number all match, so Pass is not permitted. Final decision rests with the compliance analyst (Section 8).

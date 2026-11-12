@@ -1,0 +1,10 @@
+TRANSACTION_ID: T-2005
+CORRIDOR: UAE-UK
+TRIGGER_CRITERIA_MET: new-counterparty
+COUNTERPARTY_SCREENING_RESULT: Confirmed
+BENEFICIARY_BANK_SCREENING_RESULT: No match
+CITATIONS: WL-011, T-2005, Section 1
+CITED_REASONING: Counterparty name "Farida Al Mansouri" equals the primary name of WL-011. Date of birth 1975-07-22, nationality Emirati and ID number AE-ID-559214 all match WL-011. Beneficiary bank "Union Gulf Bank" resembles no watchlist entity. The low amount and prior history do not affect the result.
+PRIOR_TRANSACTION_HISTORY: 12 prior clean transactions with this counterparty over the past year.
+RECOMMENDED_DECISION: Escalate
+WHY: REFUSED - Section 1: Confirmed Watchlist Hit. Section 1 applies regardless of transaction amount, and prior clean history is context only and cannot skip the check. Final decision rests with the compliance analyst (Section 8).

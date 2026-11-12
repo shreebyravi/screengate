@@ -1,0 +1,43 @@
+TRANSACTION:
+{
+  "id": "T-2006",
+  "corridor": "UAE-UK",
+  "counterparty": "Farida Al Mansouri ",
+  "beneficiaryBank": "Union Gulf Bank",
+  "amountUsd": 8000,
+  "counterpartyJurisdiction": "UAE",
+  "beneficiaryBankJurisdiction": "UAE",
+  "triggerNewCounterparty": true,
+  "triggerOverThreshold": false,
+  "triggerHighRiskJurisdiction": false,
+  "priorHistory": "No prior transactions with this counterparty.",
+  "notes": ""
+}
+
+COUNTERPARTY PROFILE:
+{
+  "name": "Farida Al Mansouri ",
+  "role": "Counterparty",
+  "entityType": "Individual",
+  "dobOrIncorporation": "1975-07-22",
+  "nationality": "British",
+  "idNumber": "AE-ID-559214",
+  "idIssuingCountry": "UAE",
+  "address": "Sheikh Zayed Road, Dubai, UAE",
+  "notes": ""
+}
+
+BENEFICIARY BANK PROFILE:
+{
+  "name": "Union Gulf Bank",
+  "role": "Beneficiary Bank",
+  "entityType": "Company",
+  "dobOrIncorporation": "1991-01-01",
+  "nationality": "N/A",
+  "idNumber": "AE-BNK-3087",
+  "idIssuingCountry": "UAE",
+  "address": "Bur Dubai, Dubai, UAE",
+  "notes": ""
+}
+
+Screen this transaction now and respond using exactly the OUTPUT format given in your instructions.

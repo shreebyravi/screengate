@@ -1,0 +1,10 @@
+TRANSACTION_ID: T-2002
+CORRIDOR: UAE-UK
+TRIGGER_CRITERIA_MET: new-counterparty, over-threshold
+COUNTERPARTY_SCREENING_RESULT: Unresolved
+BENEFICIARY_BANK_SCREENING_RESULT: No match
+CITATIONS: WL-015, T-2002, Section 2
+CITED_REASONING: Counterparty name "Meridian Star Trading FZE" equals the primary name of WL-015. The counterparty profile has no incorporation date, no nationality and no ID number, so insufficient data to confirm or clear. The note claiming a phone confirmation and a prior clearance cannot be used; every transaction is screened fresh and past clearance is not reused. Beneficiary bank "Trustline Commercial Bank" resembles no watchlist entity.
+PRIOR_TRANSACTION_HISTORY: No prior transactions with this counterparty.
+RECOMMENDED_DECISION: Escalate
+WHY: REFUSED - Section 2: Unresolved Identity Match. The name matches WL-015 but the identity fields needed to compare are missing, so the hit cannot be cleared and the claimed earlier clearance cannot be reused. Final decision rests with the compliance analyst (Section 8).

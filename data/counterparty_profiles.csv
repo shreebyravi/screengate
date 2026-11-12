@@ -1,0 +1,22 @@
+name,role,entity_type,dob_or_incorporation_date,nationality,id_number,id_issuing_country,address,notes
+Anand Spice Exports Pvt Ltd,Counterparty,Company,2014-06-10,N/A,IN-TL-20981,India,"Spice Market Road, Kochi, India",
+Rajiv Malhotra,Counterparty,Individual,1979-11-02,British,UK-PASS-774213X,United Kingdom,"22 Baker Street, London, UK",
+Farida Al Mansouri,Counterparty,Individual,1975-07-22,Emirati,AE-ID-559214,UAE,"Sheikh Zayed Road, Dubai, UAE",
+Meridian Star Trading FZE,Counterparty,Company,,,,UAE,"JAFZA, Dubai, UAE",Incorporation date and ID number not on file for this counterparty.
+Novak Bridge Commodities LLP,Counterparty,Company,2021-01-15,N/A,IN-TL-60912,India,"Sector 21, Gurugram, India",
+Devika Rathore Textiles Pvt Ltd,Counterparty,Company,2012-02-14,N/A,IN-TL-33210,India,"Textile Market Road, Surat, India",
+Chalmers & Wexford Logistics Ltd,Counterparty,Company,2016-04-22,N/A,UK-CH-405512,United Kingdom,"14 Dock Street, Bristol, UK",
+Crescent Minerals Co,Counterparty,Company,2018-08-30,N/A,RB-REG-70213,Region B,Region B,
+Grantley Family Office Ltd,Counterparty,Company,2005-03-09,N/A,UK-CH-119004,United Kingdom,"9 Mayfair Court, London, UK",
+Priya Nagarajan,Counterparty,Individual,1988-09-19,Indian,IN-PAN-55810M,India,"18 Anna Salai, Chennai, India",
+Whitmore & Sons Precision Ltd,Counterparty,Company,1998-05-27,N/A,UK-CH-088231,United Kingdom,"3 Foundry Lane, Sheffield, UK",
+Deshmukh Agro Traders Pvt Ltd,Counterparty,Company,2019-10-03,N/A,IN-TL-90112,India,"APMC Market, Pune, India",
+Okafor-Lindqvist Marine Supplies Ltd,Counterparty,Company,2010-12-01,N/A,UK-CH-220987,United Kingdom,"27 Harbourside, Southampton, UK",
+Suresh Iyer Global Traders,Counterparty,Company,2016-08-01,N/A,AE-TL-90233,UAE,"Deira, Dubai, UAE",Company entity; not the same party as any individual of a similar name.
+Fenwick Global Shipping Ltd,Counterparty,Company,2008-07-19,N/A,UK-CH-330441,United Kingdom,"11 Quayside, Liverpool, UK",
+Coastal Trade Bank Ltd,Beneficiary Bank,Company,1994-01-01,N/A,IN-BNK-1002,India,"Marine Lines, Mumbai, India",
+Silverline Bank Ltd,Beneficiary Bank,Company,1988-01-01,N/A,IN-BNK-2044,India,"Connaught Place, New Delhi, India",
+Union Gulf Bank,Beneficiary Bank,Company,1991-01-01,N/A,AE-BNK-3087,UAE,"Bur Dubai, Dubai, UAE",
+Trustline Commercial Bank,Beneficiary Bank,Company,2001-01-01,N/A,UK-BNK-4021,United Kingdom,"Canary Wharf, London, UK",
+Union Settlement Bank,Beneficiary Bank,Company,1999-01-01,N/A,RC-BNK-5090,Region C,Region C,
+Northgate Merchant Bank,Beneficiary Bank,Company,1996-01-01,N/A,RA-BNK-6071,Region A,Region A,
